@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Royal Admin</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: #f5f7fb;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .admin-navbar {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-container {
+            margin-top: 20px;
+            padding-bottom: 20px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #ffd700;
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+        
+        .stats-card .icon-circle {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .admin-menu {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            height: 100%;
+        }
+        
+        .menu-item {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1a1a2e;
+            transform: translateX(5px);
+            border-left-color: #1a1a2e;
+        }
+        
+        .activity-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .activity-item:nth-child(2) {
+            border-left-color: #28a745;
+        }
+        
+        .activity-item:nth-child(3) {
+            border-left-color: #6f42c1;
+        }
+        
+        .stat-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .stat-badge.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stat-badge.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .stat-badge.neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .last-updated {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+        
+        .btn-refresh-stats {
+            position: relative;
+        }
+        
+        .btn-refresh-stats .spinner {
+            display: none;
+        }
+        
+        .btn-refresh-stats.loading .spinner {
+            display: inline-block;
+        }
+        
+        .btn-refresh-stats.loading .text {
+            display: none;
+        }
+        
+        .quick-stat {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .quick-stat h6 {
+            opacity: 0.9;
+            font-size: 0.85rem;
+        }
+        
+        .quick-stat h3 {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container admin-container">
+        <!-- Flash Messages -->
+        <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show mb-4">
+                <i class="fas fa-check-circle me-2"></i><%= success_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-4">
+                <i class="fas fa-exclamation-circle me-2"></i><%= error_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <!-- Dashboard Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h2 class="mb-1">Admin Dashboard</h2>
+                <p class="text-muted mb-0">Manage your e-commerce store from here</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="last-updated d-inline-block">
+                    <i class="fas fa-clock me-1"></i>
+                    Last updated: <span id="lastUpdated">Just now</span>
+                </div>
+            </div>
+        </div>
+        
+        <% if (stats) { %>
+            <!-- Main Stats Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-2">TOTAL PRODUCTS</h6>
+                                <h2 class="mb-0" id="totalProducts"><%= stats.totalProducts %></h2>
+                                <div class="mt-2">
+                                    <span class="stat-badge <%= stats.productChange >= 0 ? 'positive' : 'negative' %>">
+                                        <i class="fas <%= stats.productChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' %> me-1"></i>
+                                        <%= Math.abs(stats.productChange) %>%
+                                    </span>
+                                    <span class="text-muted ms-2">from last month</span>
+                                </div>
+                            </div>
+                            <div class="icon-circle bg-primary text-white rounded-circle">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <% if (stats.lowStockItems > 0) { %>
+                                <div class="alert alert-warning py-2 mb-2">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong><%= stats.lowStockItems %></strong> items low on stock
+                                </div>
+                            <% } %>
+                            <a href="/admin/products" class="btn btn-primary w-100">
+                                <i class="fas fa-cog me-1"></i> Manage Products
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-2">TOTAL ORDERS</h6>
+                                <h2 class="mb-0" id="totalOrders"><%= stats.totalOrders %></h2>
+                                <div class="mt-2">
+                                    <span class="stat-badge <%= stats.orderChange >= 0 ? 'positive' : 'negative' %>">
+                                        <i class="fas <%= stats.orderChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' %> me-1"></i>
+                                        <%= Math.abs(stats.orderChange) %>%
+                                    </span>
+                                    <span class="text-muted ms-2">from last month</span>
+                                </div>
+                            </div>
+                            <div class="icon-circle bg-success text-white rounded-circle">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h5 class="mb-0 text-success"><%= stats.todaysOrders %></h5>
+                                        <small class="text-muted">Today</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center">
+                                        <h5 class="mb-0 text-warning"><%= stats.pendingOrders %></h5>
+                                        <small class="text-muted">Pending</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="/admin/orders" class="btn btn-success w-100 mt-3">
+                                <i class="fas fa-eye me-1"></i> View Orders
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-2">TOTAL USERS</h6>
+                                <h2 class="mb-0" id="totalUsers"><%= stats.totalUsers %></h2>
+                                <div class="mt-2">
+                                    <span class="stat-badge <%= stats.userChange >= 0 ? 'positive' : 'negative' %>">
+                                        <i class="fas <%= stats.userChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' %> me-1"></i>
+                                        <%= Math.abs(stats.userChange) %>%
+                                    </span>
+                                    <span class="text-muted ms-2">growth this month</span>
+                                </div>
+                            </div>
+                            <div class="icon-circle bg-info text-white rounded-circle">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="alert alert-info py-2 mb-2">
+                                <i class="fas fa-user-plus me-2"></i>
+                                <strong><%= stats.newUsersToday %></strong> new users today
+                            </div>
+                            <a href="/admin/users" class="btn btn-info w-100">
+                                <i class="fas fa-user-cog me-1"></i> Manage Users
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stats-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-2">TOTAL REVENUE</h6>
+                                <h2 class="mb-0" id="totalRevenue">₹<%= stats.totalRevenue.toLocaleString('en-IN') %></h2>
+                                <div class="mt-2">
+                                    <span class="stat-badge <%= stats.revenueChange >= 0 ? 'positive' : 'negative' %>">
+                                        <i class="fas <%= stats.revenueChange >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' %> me-1"></i>
+                                        <%= Math.abs(stats.revenueChange) %>%
+                                    </span>
+                                    <span class="text-muted ms-2">from last month</span>
+                                </div>
+                            </div>
+                            <div class="icon-circle bg-warning text-white rounded-circle">
+                                <i class="fas fa-rupee-sign"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="alert alert-warning py-2 mb-2">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Average order: <strong>₹<%= stats.avgOrderValue.toLocaleString('en-IN') %></strong>
+                            </div>
+                            <a href="/admin/orders" class="btn btn-warning w-100">
+                                <i class="fas fa-chart-bar me-1"></i> Revenue Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats Row -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="admin-menu">
+                        <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Quick Overview</h5>
+                        <div class="row">
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="quick-stat" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                    <h6>Low Stock</h6>
+                                    <h3><%= stats.lowStockItems %></h3>
+                                    <small>Products < 10 units</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="quick-stat" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                    <h6>Today's Orders</h6>
+                                    <h3><%= stats.todaysOrders %></h3>
+                                    <small>Orders placed today</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="quick-stat" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                                    <h6>New Users</h6>
+                                    <h3><%= stats.newUsersToday %></h3>
+                                    <small>Registered today</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="quick-stat" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                                    <h6>Pending Orders</h6>
+                                    <h3><%= stats.pendingOrders %></h3>
+                                    <small>Need processing</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="quick-stat" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                    <h6>Avg. Order Value</h6>
+                                    <h3>₹<%= stats.avgOrderValue %></h3>
+                                    <small>Per order</small>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                                <div class="quick-stat" style="background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);">
+                                    <h6>Order Completion</h6>
+                                    <h3><%= stats.totalOrders > 0 ? Math.round((stats.totalOrders - stats.pendingOrders) / stats.totalOrders * 100) : 0 %>%</h3>
+                                    <small>Success rate</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Menu & Recent Activities -->
+            <div class="row">
+                <div class="col-lg-8 col-md-7">
+                    <div class="admin-menu">
+                        <h5 class="mb-4"><i class="fas fa-bolt me-2 text-warning"></i>Quick Actions</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <a href="/admin/products/create" class="menu-item">
+                                    <i class="fas fa-plus-circle me-2 text-success"></i> 
+                                    <div>
+                                        <strong>Add New Product</strong>
+                                        <small class="d-block text-muted">Add new item to inventory</small>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <a href="/admin/orders" class="menu-item">
+                                    <i class="fas fa-list-alt me-2 text-primary"></i>
+                                    <div>
+                                        <strong>View All Orders</strong>
+                                        <small class="d-block text-muted">Manage customer orders</small>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <a href="/products" class="menu-item" target="_blank">
+                                    <i class="fas fa-store me-2 text-info"></i>
+                                    <div>
+                                        <strong>View Store Front</strong>
+                                        <small class="d-block text-muted">See how customers view store</small>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <a href="/admin/users" class="menu-item">
+                                    <i class="fas fa-user-shield me-2 text-danger"></i>
+                                    <div>
+                                        <strong>Manage Users</strong>
+                                        <small class="d-block text-muted">View & manage all users</small>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <a href="/admin/settings" class="menu-item">
+                                    <i class="fas fa-cogs me-2 text-warning"></i>
+                                    <div>
+                                        <strong>Admin Settings</strong>
+                                        <small class="d-block text-muted">Configure system settings</small>
+                                    </div>
+                                </a>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <a href="/admin/products" class="menu-item">
+                                    <i class="fas fa-edit me-2 text-secondary"></i>
+                                    <div>
+                                        <strong>Edit Products</strong>
+                                        <small class="d-block text-muted">Update product details</small>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="text-muted mb-3"><i class="fas fa-tachometer-alt me-2"></i>Store Performance</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Order Processing</span>
+                                        <span><%= stats.totalOrders > 0 ? Math.round((stats.totalOrders - stats.pendingOrders) / stats.totalOrders * 100) : 0 %>%</span>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 8px;">
+                                        <div class="progress-bar bg-success" style="width: <%= stats.totalOrders > 0 ? Math.round((stats.totalOrders - stats.pendingOrders) / stats.totalOrders * 100) : 0 %>%"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Inventory Health</span>
+                                        <span><%= stats.totalProducts > 0 ? 100 - Math.round((stats.lowStockItems / stats.totalProducts) * 100) : 100 %>%</span>
+                                    </div>
+                                    <div class="progress mb-3" style="height: 8px;">
+                                        <div class="progress-bar bg-info" style="width: <%= stats.totalProducts > 0 ? 100 - Math.round((stats.lowStockItems / stats.totalProducts) * 100) : 100 %>%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-5">
+                    <!-- Recent Activities -->
+                    <div class="admin-menu mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activities</h5>
+                            <span class="badge bg-primary"><%= stats.recentActivities.length %></span>
+                        </div>
+                        
+                        <div id="recentActivities">
+                            <% stats.recentActivities.forEach(function(activity, index) { %>
+                                <div class="activity-item">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <strong class="text-primary"><%= activity.title %></strong>
+                                        <small class="text-muted"><%= activity.time %></small>
+                                    </div>
+                                    <p class="mb-0 text-muted"><%= activity.description %></p>
+                                </div>
+                            <% }); %>
+                        </div>
+                        
+                        <% if (stats.recentActivities.length === 0) { %>
+                            <div class="text-center py-4">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No recent activities</p>
+                                <small>Start managing your store to see activities here</small>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                 
+                    <!-- <div class="admin-menu">
+                        <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>System Info</h5>
+                        <div class="system-info">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-3">
+                                    <i class="fas fa-server text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Status</small>
+                                    <strong class="text-success">Online</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-3">
+                                    <i class="fas fa-database text-info"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Database</small>
+                                    <strong>Connected</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-3">
+                                    <i class="fas fa-user text-warning"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Admin User</small>
+                                    <strong><%= user.name %></strong>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-3">
+                                    <i class="fas fa-clock text-secondary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Session</small>
+                                    <strong>Active</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-calendar text-danger"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Today's Date</small>
+                                    <strong><%= new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+            
+        <% } else { %>
+            <!-- If stats not available -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="admin-menu text-center py-5">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h4 class="mb-3">Statistics Not Available</h4>
+                        <p class="text-muted mb-4">Unable to load dashboard statistics. Please check your database connection.</p>
+                        <button class="btn btn-primary" onclick="window.location.reload()">
+                            <i class="fas fa-redo me-2"></i> Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 border-radius-lg  mt-4">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <i class="fas fa-crown me-2 text-warning"></i>
+                        &copy; <%= new Date().getFullYear() %> Royal Footwear Admin Panel
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Secure Admin Portal | 
+                        <span class="text-success">
+                            <i class="fas fa-circle me-1"></i>
+                            System Operational
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize timestamp
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTimestamp();
+            
+            // Add refresh button event listener
+            const refreshBtn = document.getElementById('refreshStatsBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', refreshStats);
+            }
+            
+            // Confirm logout
+            const logoutLink = document.querySelector('a[href="/logout"]');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    if (!confirm('Are you sure you want to logout from admin panel?')) {
+                        e.preventDefault();
+                    }
+                });
+            }
+        });
+        
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('lastUpdated').textContent = timeString;
+        }
+        
+        // Refresh stats via AJAX
+       
+        
+        // Update stats on page
+        function updateStats(stats) {
+            // Update main stats
+            document.getElementById('totalProducts').textContent = stats.totalProducts;
+            document.getElementById('totalOrders').textContent = stats.totalOrders;
+            document.getElementById('totalUsers').textContent = stats.totalUsers;
+            document.getElementById('totalRevenue').textContent = '₹' + stats.totalRevenue.toLocaleString('en-IN');
+            
+            // Update recent activities
+            const activitiesContainer = document.getElementById('recentActivities');
+            if (activitiesContainer && stats.recentActivities) {
+                activitiesContainer.innerHTML = '';
+                stats.recentActivities.forEach(activity => {
+                    const activityDiv = document.createElement('div');
+                    activityDiv.className = 'activity-item';
+                    activityDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <strong class="text-primary">${activity.title}</strong>
+                            <small class="text-muted">${activity.time}</small>
+                        </div>
+                        <p class="mb-0 text-muted">${activity.description}</p>
+                    `;
+                    activitiesContainer.appendChild(activityDiv);
+                });
+            }
+        }
+        
+        // Show alert message
+        function showAlert(message, type) {
+            // Remove existing alerts
+            const existingAlerts = document.querySelectorAll('.alert-dismissible');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show mb-4`;
+            alertDiv.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert at the top of container
+            const container = document.querySelector('.admin-container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        // Auto-refresh every 2 minutes
+        setInterval(() => {
+            console.log('Auto-refreshing dashboard stats...');
+            refreshStats();
+        }, 120000);
+        
+        // Update time every second
+        setInterval(updateTimestamp, 1000);
+    </script>
+</body>
+</html>

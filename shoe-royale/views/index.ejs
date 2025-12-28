@@ -1,0 +1,181 @@
+<!-- Hero Section -->
+<section class="hero-section royal-gradient">
+    <div class="container">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <h1 class="display-3 fw-bold text-white mb-4">Walk Like Royalty</h1>
+                <p class="lead text-white mb-4">Discover our exclusive collection of premium footwear, crafted with precision and luxury in mind.</p>
+                <a href="/products" class="btn btn-gold btn-lg px-5">
+                    <i class="fas fa-shopping-bag me-2"></i>Shop Collection
+                </a>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image-container">
+                    <img src="/images/hero-shoe.png" alt="Premium Shoes" class="img-fluid hero-image">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Categories -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Shop by Category</h2>
+            <p class="text-muted">Find the perfect pair for every occasion</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="category-card">
+                    <a href="/products?category=sneakers" class="text-decoration-none">
+                        <div class="category-image">
+                            <img src="/images/category-sneakers.jpg" alt="Sneakers" class="img-fluid">
+                        </div>
+                        <div class="category-content text-center py-3">
+                            <h5 class="mb-0">Sneakers</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="category-card">
+                    <a href="/products?category=formal" class="text-decoration-none">
+                        <div class="category-image">
+                            <img src="/images/category-formal.jpg" alt="Formal Shoes" class="img-fluid">
+                        </div>
+                        <div class="category-content text-center py-3">
+                            <h5 class="mb-0">Formal</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="category-card">
+                    <a href="/products?category=boots" class="text-decoration-none">
+                        <div class="category-image">
+                            <img src="/images/category-boots.jpg" alt="Boots" class="img-fluid">
+                        </div>
+                        <div class="category-content text-center py-3">
+                            <h5 class="mb-0">Boots</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="category-card">
+                    <a href="/products?category=sandals" class="text-decoration-none">
+                        <div class="category-image">
+                            <img src="/images/category-sandals.jpg" alt="Sandals" class="img-fluid">
+                        </div>
+                        <div class="category-content text-center py-3">
+                            <h5 class="mb-0">Sandals</h5>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h2 class="section-title">Featured Products</h2>
+                <p class="text-muted">Handpicked selections for the discerning customer</p>
+            </div>
+            <a href="/products" class="btn btn-outline-dark">View All</a>
+        </div>
+        
+        <div class="row g-4">
+            <% if (featuredProducts && featuredProducts.length > 0) { %>
+                <% featuredProducts.forEach(product => { %>
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img src="<%= product.colors[0]?.images[0] || '/images/nike.jpg' %>" 
+                                     alt="<%= product.name %>" class="img-fluid">
+                                <% if (product.discountPrice) { %>
+                                    <span class="badge bg-danger position-absolute top-0 end-0 m-2">Sale</span>
+                                <% } %>
+                                <% if (product.featured) { %>
+                                    <span class="badge bg-warning position-absolute top-0 start-0 m-2">Featured</span>
+                                <% } %>
+                            </div>
+                            <div class="product-content p-3">
+                                <h6 class="product-title mb-1"><%= product.name %></h6>
+                                <p class="product-brand text-muted small mb-2"><%= product.brand %></p>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="product-price">
+                                        <% if (product.discountPrice) { %>
+                                            <span class="text-danger fw-bold">$<%= product.discountPrice %></span>
+                                            <span class="text-muted text-decoration-line-through ms-2">$<%= product.price %></span>
+                                        <% } else { %>
+                                            <span class="fw-bold">$<%= product.price %></span>
+                                        <% } %>
+                                    </div>
+                                    <div class="product-rating">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <span class="small"><%= product.rating %></span>
+                                    </div>
+                                </div>
+                                
+                                <a href="/products/<%= product._id %>" class="btn btn-outline-dark w-100">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">No featured products available</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Royal Features -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon royal-icon mb-3">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2">Premium Quality</h5>
+                    <p class="text-muted">Crafted with the finest materials for lasting comfort and style</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon royal-icon mb-3">
+                        <i class="fas fa-truck fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2">Free Shipping</h5>
+                    <p class="text-muted">Free delivery on all orders over $100</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon royal-icon mb-3">
+                        <i class="fas fa-undo-alt fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2">Easy Returns</h5>
+                    <p class="text-muted">30-day return policy for your peace of mind</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

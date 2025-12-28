@@ -1,0 +1,189 @@
+/* Royal Gradient Backgrounds */
+.royal-gradient {
+    background: linear-gradient(135deg, 
+        #1a1a2e 0%, 
+        #16213e 25%, 
+        #0f3460 50%, 
+        #1a1a2e 100%);
+    background-size: 400% 400%;
+    animation: royalGradient 15s ease infinite;
+}
+
+@keyframes royalGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Royal Icons */
+.royal-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(45deg, var(--accent-color), #ffed4e);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: var(--dark-color);
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    transition: var(--transition);
+}
+
+.royal-icon:hover {
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Royal Border */
+.royal-border {
+    position: relative;
+    padding: 2px;
+    background: linear-gradient(45deg, var(--accent-color), #ffed4e);
+    border-radius: var(--border-radius);
+}
+
+.royal-border-inner {
+    background: white;
+    border-radius: calc(var(--border-radius) - 2px);
+    padding: 20px;
+}
+
+/* Luxury Card */
+.luxury-card {
+    background: white;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: var(--transition);
+}
+
+.luxury-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-color), #ffed4e);
+}
+
+.luxury-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Crown Animation */
+.crown-animation {
+    position: relative;
+    display: inline-block;
+}
+
+.crown-animation i {
+    animation: crownBounce 2s ease-in-out infinite;
+}
+
+@keyframes crownBounce {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* Price Tag Animation */
+.price-tag {
+    position: relative;
+    display: inline-block;
+    padding: 5px 15px;
+    background: linear-gradient(45deg, var(--accent-color), #ffed4e);
+    color: var(--dark-color);
+    font-weight: bold;
+    border-radius: 20px;
+    animation: pricePulse 2s infinite;
+}
+
+@keyframes pricePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Loading Spinner Royal */
+.royal-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--accent-color);
+    border-radius: 50%;
+    animation: royalSpin 1s linear infinite;
+}
+
+@keyframes royalSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrollbar Royal */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--accent-color), #ffed4e);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(#ffed4e, var(--accent-color));
+}
+
+/* Shine Effect */
+.shine-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.shine-effect::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { left: -50%; }
+    100% { left: 150%; }
+}
+
+/* Floating Elements */
+.floating {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Glow Effect */
+.glow {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    transition: var(--transition);
+}
+
+.glow:hover {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}

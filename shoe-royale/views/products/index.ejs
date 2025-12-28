@@ -1,0 +1,961 @@
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col">
+            <h1 class="display-5 fw-bold text-center mb-3">Royal Footwear Collection</h1>
+            <p class="text-center text-muted lead">Discover our premium collection of shoes crafted for royalty</p>
+        </div>
+    </div>
+    
+    <!-- Search and Filter Section -->
+    <!-- [Keep your existing filter code here - same as before] -->
+    <!-- ... -->
+    
+    <!-- Products Count and Results -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h5 class="mb-0">
+                <% if (product && product.length > 0) { %>
+                    Showing <span class="text-gold"><%= product.length %></span> products
+                <% } else { %>
+                    No products found
+                <% } %>
+            </h5>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <% if (user && user.role === 'admin') { %>
+                <a href="/products/admin/create" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Add New Product
+                </a>
+            <% } %>
+        </div>
+    </div>
+    
+    <!-- Flipkart Style Products Grid -->
+    <% if (product && product.length > 0) { %>
+        <div class="row g-4">
+            <% product.forEach(prod => { %>
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+                    <!-- Flipkart Style Product Card -->
+                    <div class="fk-product-card">
+                        <!-- Product Image Container -->
+                        <div class="fk-product-image-container">
+                            <a href="/products/<%= prod._id %>" class="fk-product-image-link">
+                                <div class="fk-product-image-wrapper">
+                                    <img src="<%= (prod.colors && prod.colors.length > 0 && prod.colors[0].images && prod.colors[0].images.length > 0) 
+                                        ? prod.colors[0].images[0] 
+                                        : '/images/default-shoe.jpg' %>" 
+                                         alt="<%= prod.name %>" 
+                                         class="fk-product-image">
+                                    
+                                    <!-- Quick View Overlay -->
+                                    <div class="fk-quick-view">
+                                        <button class="btn btn-sm btn-light" onclick="window.location.href='/products/<%= prod._id %>'">
+                                            <i class="fas fa-eye me-1"></i>Quick View
+                                        </button>
+                                    </div>
+                                </div>
+                            </a>
+                            
+                            <!-- Discount Badge -->
+                            <% if (prod.discountPrice && prod.discountPrice < prod.price) { %>
+                                <div class="fk-discount-badge">
+                                    <%= Math.round((1 - prod.discountPrice/prod.price) * 100) %>% off
+                                </div>
+                            <% } %>
+                            
+                            <!-- Wishlist Button - Top Right Corner -->
+                            <div class="fk-wishlist-btn" onclick="toggleWishlist('<%= prod._id %>', this)">
+                                <i class="far fa-heart"></i>
+                            </div>
+                            
+                            <!-- Compare Button (Optional) -->
+                            <div class="fk-compare-btn" title="Add to Compare">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Details -->
+                        <div class="fk-product-details">
+                            <!-- Product Title -->
+                            <a href="/products/<%= prod._id %>" class="fk-product-title">
+                                <%= prod.name %>
+                            </a>
+                            
+                            <!-- Product Rating -->
+                            <div class="fk-product-rating">
+                                <div class="fk-stars">
+                                    <% const rating = prod.rating || 0; %>
+                                    <% for(let i = 1; i <= 5; i++) { %>
+                                        <% if (i <= Math.floor(rating)) { %>
+                                            <i class="fas fa-star active"></i>
+                                        <% } else if (i === Math.ceil(rating) && rating % 1 !== 0) { %>
+                                            <i class="fas fa-star-half-alt active"></i>
+                                        <% } else { %>
+                                            <i class="far fa-star"></i>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                                <span class="fk-rating-count">(<%= prod.reviewsCount || 0 %>)</span>
+                            </div>
+                            
+                            <!-- Product Features -->
+                            <div class="fk-product-features">
+                                <ul class="fk-features-list">
+                                    <li>Premium Quality</li>
+                                    <li>Comfort Fit</li>
+                                    <li>Water Resistant</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Price Section -->
+                            <div class="fk-price-section">
+                                <% if (prod.discountPrice && prod.discountPrice < prod.price) { %>
+                                    <div class="fk-price-row">
+                                        <span class="fk-current-price">₹<%= prod.discountPrice.toFixed(2) %></span>
+                                        <span class="fk-original-price">₹<%= prod.price.toFixed(2) %></span>
+                                        <span class="fk-discount-percent">
+                                            Save ₹<%= (prod.price - prod.discountPrice).toFixed(2) %>
+                                        </span>
+                                    </div>
+                                <% } else { %>
+                                    <div class="fk-price-row">
+                                        <span class="fk-current-price">₹<%= prod.price.toFixed(2) %></span>
+                                    </div>
+                                <% } %>
+                                
+                                <!-- Delivery Info -->
+                                <div class="fk-delivery-info">
+                                    <i class="fas fa-shipping-fast"></i>
+                                    <span>Free delivery</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Size Options -->
+                            <% if (prod.sizes && prod.sizes.length > 0) { %>
+                                <div class="fk-size-options">
+                                    <span class="fk-size-label">Sizes:</span>
+                                    <% 
+                                        const availableSizes = prod.sizes.filter(s => s.quantity > 0).slice(0, 4);
+                                        availableSizes.forEach((size, index) => { 
+                                    %>
+                                        <span class="fk-size-tag"><%= size.size %></span>
+                                    <% }); %>
+                                    <% if (prod.sizes.filter(s => s.quantity > 0).length > 4) { %>
+                                        <span class="fk-size-more">+<%= prod.sizes.filter(s => s.quantity > 0).length - 4 %> more</span>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                            
+                            <!-- Color Options -->
+                            <% if (prod.colors && prod.colors.length > 0) { %>
+                                <div class="fk-color-options">
+                                    <span class="fk-color-label">Colors:</span>
+                                    <% prod.colors.slice(0, 3).forEach((color, index) => { %>
+                                        <span class="fk-color-dot" 
+                                              style="background-color: <%= color.code || '#000000' %>"
+                                              title="<%= color.name %>"></span>
+                                    <% }); %>
+                                    <% if (prod.colors.length > 3) { %>
+                                        <span class="fk-color-more">+<%= prod.colors.length - 3 %> more</span>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                            
+                            <!-- Add to Cart Button -->
+                            <div class="fk-action-buttons">
+                                <% if (prod.sizes && prod.sizes.some(s => s.quantity > 0)) { %>
+                                    <button class="fk-add-to-cart-btn" onclick="addToCart('<%= prod._id %>')">
+                                        <i class="fas fa-shopping-cart me-2"></i>ADD TO CART
+                                    </button>
+                                <% } else { %>
+                                    <button class="fk-out-of-stock-btn" disabled>
+                                        <i class="fas fa-times-circle me-2"></i>OUT OF STOCK
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } else { %>
+        <!-- No Products Found -->
+        <div class="text-center py-5">
+            <div class="empty-state">
+                <i class="fas fa-shoe-prints fa-4x text-muted mb-4"></i>
+                <h4 class="mb-3">No Products Found</h4>
+                <p class="text-muted mb-4">
+                    Try adjusting your filters or search terms.
+                </p>
+                <a href="/products" class="btn btn-gold">
+                    <i class="fas fa-undo me-2"></i>Clear Filters
+                </a>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<!-- Wishlist Success Modal -->
+<div class="modal fade" id="wishlistModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="wishlist-modal-icon mb-4">
+                    <i class="fas fa-heart fa-3x text-danger"></i>
+                </div>
+                <h4 class="mb-3" id="wishlistMessage">Product added to wishlist!</h4>
+                <div class="d-grid gap-2">
+                    <a href="/wishlist" class="btn btn-danger">
+                        <i class="fas fa-heart me-2"></i>View Wishlist
+                    </a>
+                    <button class="btn btn-outline-dark" data-bs-dismiss="modal">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== FLIPKART STYLE PRODUCT CARD ===== */
+
+/* Main Product Card */
+.fk-product-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    height: 100%;
+    border: 1px solid #e9ecef;
+}
+
+.fk-product-card:hover {
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+}
+
+/* Product Image Container */
+.fk-product-image-container {
+    position: relative;
+    padding: 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fk-product-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.fk-product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.fk-product-card:hover .fk-product-image {
+    transform: scale(1.05);
+}
+
+.fk-product-image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Quick View Overlay */
+.fk-quick-view {
+    position: absolute;
+    bottom: -40px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.fk-product-card:hover .fk-quick-view {
+    bottom: 15px;
+    opacity: 1;
+}
+
+.fk-quick-view .btn {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 5px 15px;
+    font-size: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.fk-quick-view .btn:hover {
+    background: #f8f9fa;
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+/* Discount Badge */
+.fk-discount-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #ff6161;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 2;
+}
+
+/* Wishlist Button (Flipkart Style - Top Right) */
+.fk-wishlist-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.fk-wishlist-btn:hover {
+    background: #ff6b6b;
+    color: white;
+    transform: scale(1.1);
+}
+
+.fk-wishlist-btn.active {
+    background: #ff6b6b;
+    color: white;
+}
+
+.fk-wishlist-btn.active i {
+    font-weight: 900 !important;
+}
+
+.fk-wishlist-btn i {
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+/* Compare Button */
+.fk-compare-btn {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    z-index: 2;
+    font-size: 14px;
+    color: #666;
+}
+
+.fk-compare-btn:hover {
+    background: #f8f9fa;
+    color: #0d6efd;
+}
+
+/* Product Details */
+.fk-product-details {
+    padding: 15px;
+}
+
+/* Product Title */
+.fk-product-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212529;
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 40px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    transition: color 0.3s ease;
+}
+
+.fk-product-title:hover {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+/* Product Rating */
+.fk-product-rating {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.fk-stars {
+    color: #ffc107;
+    margin-right: 5px;
+}
+
+.fk-stars .active {
+    color: #ffc107;
+}
+
+.fk-stars i {
+    font-size: 12px;
+}
+
+.fk-rating-count {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Product Features */
+.fk-product-features {
+    margin-bottom: 12px;
+}
+
+.fk-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.fk-features-list li {
+    font-size: 11px;
+    color: #28a745;
+    background: #d4edda;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #c3e6cb;
+}
+
+/* Price Section */
+.fk-price-section {
+    margin-bottom: 12px;
+}
+
+.fk-price-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.fk-current-price {
+    font-size: 20px;
+    font-weight: 700;
+    color: #212529;
+    margin-right: 10px;
+}
+
+.fk-original-price {
+    font-size: 14px;
+    color: #6c757d;
+    text-decoration: line-through;
+    margin-right: 10px;
+}
+
+.fk-discount-percent {
+    font-size: 12px;
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Delivery Info */
+.fk-delivery-info {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #28a745;
+}
+
+.fk-delivery-info i {
+    margin-right: 5px;
+    font-size: 14px;
+}
+
+/* Size Options */
+.fk-size-options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.fk-size-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-right: 5px;
+}
+
+.fk-size-tag {
+    font-size: 11px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 2px 8px;
+    border-radius: 3px;
+    cursor: default;
+}
+
+.fk-size-more {
+    font-size: 11px;
+    color: #0d6efd;
+    cursor: pointer;
+}
+
+/* Color Options */
+.fk-color-options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.fk-color-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-right: 5px;
+}
+
+.fk-color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #dee2e6;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.fk-color-dot:hover {
+    transform: scale(1.2);
+}
+
+.fk-color-more {
+    font-size: 11px;
+    color: #0d6efd;
+    cursor: pointer;
+}
+
+/* Action Buttons */
+.fk-action-buttons {
+    margin-top: auto;
+}
+
+.fk-add-to-cart-btn {
+    width: 100%;
+    background: #ff9f00;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fk-add-to-cart-btn:hover {
+    background: #ff8300;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 10px rgba(255, 159, 0, 0.3);
+}
+
+.fk-out-of-stock-btn {
+    width: 100%;
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Wishlist Modal Icon */
+.wishlist-modal-icon {
+    animation: heartBeat 0.6s ease;
+}
+
+@keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.2); }
+    50% { transform: scale(0.9); }
+    75% { transform: scale(1.1); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .fk-product-image-container {
+        height: 200px;
+        padding: 10px;
+    }
+    
+    .fk-product-details {
+        padding: 12px;
+    }
+    
+    .fk-current-price {
+        font-size: 18px;
+    }
+    
+    .fk-add-to-cart-btn {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .fk-quick-view {
+        bottom: 10px;
+        opacity: 1;
+    }
+    
+    .fk-product-card:hover .fk-quick-view {
+        bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .col-sm-6 {
+        width: 50%;
+    }
+    
+    .fk-product-image-container {
+        height: 180px;
+    }
+    
+    .fk-product-title {
+        font-size: 13px;
+        min-height: 36px;
+    }
+    
+    .fk-current-price {
+        font-size: 16px;
+    }
+}
+
+/* Empty State */
+.empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+</style>
+
+<script>
+// Toggle Wishlist Function
+function toggleWishlist(productId, button) {
+    const icon = button.querySelector('i');
+    
+    // Toggle active state
+    button.classList.toggle('active');
+    
+    // Toggle icon
+    if (button.classList.contains('active')) {
+        icon.className = 'fas fa-heart';
+        
+        // Add to wishlist API call
+        addToWishlist(productId);
+    } else {
+        icon.className = 'far fa-heart';
+        
+        // Remove from wishlist API call
+        removeFromWishlist(productId);
+    }
+}
+
+// Add to Wishlist
+function addToWishlist(productId) {
+    if (!<%= user ? 'true' : 'false' %>) {
+        showNotification('Please login to add to wishlist', 'warning');
+        
+        // Reset button state
+        const button = document.querySelector(`.fk-wishlist-btn[onclick*="${productId}"]`);
+        if (button) {
+            button.classList.remove('active');
+            button.querySelector('i').className = 'far fa-heart';
+        }
+        
+        setTimeout(() => {
+            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }, 1500);
+        return;
+    }
+    
+    fetch('/wishlist/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ productId: productId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success modal
+            const modal = new bootstrap.Modal(document.getElementById('wishlistModal'));
+            document.getElementById('wishlistMessage').textContent = 'Product added to wishlist!';
+            modal.show();
+        } else {
+            showNotification(data.error || 'Failed to add to wishlist', 'error');
+            
+            // Reset button state
+            const button = document.querySelector(`.fk-wishlist-btn[onclick*="${productId}"]`);
+            if (button) {
+                button.classList.remove('active');
+                button.querySelector('i').className = 'far fa-heart';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+// Remove from Wishlist
+function removeFromWishlist(productId) {
+    fetch(`/wishlist/remove/${productId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Product removed from wishlist', 'success');
+        } else {
+            showNotification(data.error || 'Failed to remove from wishlist', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+// Add to Cart Function
+function addToCart(productId) {
+    if (!<%= user ? 'true' : 'false' %>) {
+        showNotification('Please login to add to cart', 'warning');
+        setTimeout(() => {
+            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }, 1500);
+        return;
+    }
+    
+    // Show loading on button
+    const buttons = document.querySelectorAll(`.fk-add-to-cart-btn[onclick*="${productId}"]`);
+    buttons.forEach(btn => {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>ADDING...';
+        btn.disabled = true;
+        
+        // Reset after 3 seconds
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.disabled = false;
+        }, 3000);
+    });
+    
+    // Send request
+    fetch('/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            productId: productId,
+            quantity: 1,
+            size: 8, // Default size
+            color: 'Black' // Default color
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Product added to cart!', 'success');
+            updateCartCount();
+        } else {
+            showNotification(data.error || 'Failed to add to cart', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        buttons.forEach(btn => {
+            btn.innerHTML = '<i class="fas fa-shopping-cart me-2"></i>ADD TO CART';
+            btn.disabled = false;
+        });
+    });
+}
+
+// Update cart count in navbar
+function updateCartCount() {
+    fetch('/cart/count')
+        .then(response => response.json())
+        .then(data => {
+            const cartBadge = document.querySelector('.cart-count-badge');
+            if (cartBadge) {
+                if (data.count > 0) {
+                    cartBadge.textContent = data.count;
+                    cartBadge.style.display = 'flex';
+                } else {
+                    cartBadge.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating cart count:', error);
+        });
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    `;
+    
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Check if products are already in wishlist on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // If user is logged in, check wishlist status
+    <% if (user) { %>
+        fetch('/wishlist/check')
+            .then(response => response.json())
+            .then(data => {
+                if (data.wishlistItems) {
+                    data.wishlistItems.forEach(productId => {
+                        const button = document.querySelector(`.fk-wishlist-btn[onclick*="${productId}"]`);
+                        if (button) {
+                            button.classList.add('active');
+                            button.querySelector('i').className = 'fas fa-heart';
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error checking wishlist:', error));
+    <% } %>
+    
+    // Quick view functionality
+    document.querySelectorAll('.fk-quick-view .btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+});
+
+// Quick add to cart with animation
+function quickAddToCart(productId) {
+    addToCart(productId);
+    
+    // Add animation effect
+    const button = document.querySelector(`.fk-add-to-cart-btn[onclick*="${productId}"]`);
+    if (button) {
+        button.classList.add('animated');
+        setTimeout(() => {
+            button.classList.remove('animated');
+        }, 300);
+    }
+}
+</script>
+
+<!-- Add some animation styles -->
+<style>
+.animated {
+    animation: bounce 0.3s ease;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+}
+
+/* Hover effect for product card */
+.fk-product-card {
+    position: relative;
+}
+
+.fk-product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-color), #ffed4e);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.fk-product-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* Pulse animation for wishlist */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+}
+
+.fk-wishlist-btn.active {
+    animation: pulse 0.6s ease;
+}
+</style>

@@ -1,0 +1,783 @@
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-5">
+        <div class="col">
+            <h1 class="display-5 fw-bold text-center mb-3">Your Shopping Cart</h1>
+            <p class="text-center text-muted lead">Review and manage your selected items</p>
+        </div>
+    </div>
+    
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/products">Products</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+        </ol>
+    </nav>
+    
+    <!-- Cart Content -->
+    <% if (cart && cart.items && cart.items.length > 0) { %>
+        <div class="row g-5">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                <!-- Cart Header -->
+                <div class="card royal-border mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-shopping-cart me-2 text-gold"></i>
+                                    <%= cart.items.length %> Item<%= cart.items.length > 1 ? 's' : '' %> in Cart
+                                </h5>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <button class="btn btn-outline-danger btn-sm" onclick="clearCart()">
+                                    <i class="fas fa-trash me-1"></i>Clear Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cart Items List -->
+                <div class="cart-items">
+                    <% cart.items.forEach((item, index) => { %>
+                        <div class="card mb-4 cart-item" data-item-id="<%= item._id %>" data-price="<%= item.price %>">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <!-- Product Image -->
+                                    <div class="col-md-2">
+                                        <% if (item.product && item.product.colors && item.product.colors.length > 0) { %>
+                                            <img src="<%= item.product.colors[0].images && item.product.colors[0].images.length > 0 
+                                                ? item.product.colors[0].images[0] 
+                                                : '/images/default-shoe.jpg' %>" 
+                                                 alt="<%= item.product.name %>"
+                                                 class="img-fluid rounded"
+                                                 style="height: 100px; object-fit: contain;">
+                                        <% } else { %>
+                                            <img src="/images/default-shoe.jpg" 
+                                                 alt="Product Image"
+                                                 class="img-fluid rounded"
+                                                 style="height: 100px; object-fit: contain;">
+                                        <% } %>
+                                    </div>
+                                    
+                                    <!-- Product Details -->
+                                    <div class="col-md-4">
+                                        <h6 class="product-title mb-2">
+                                            <a href="/products/<%= item.product._id %>" class="text-decoration-none text-dark">
+                                                <%= item.product.name %>
+                                            </a>
+                                        </h6>
+                                        <p class="text-muted small mb-2"><%= item.product.brand %></p>
+                                        
+                                        <!-- Color and Size -->
+                                        <div class="d-flex gap-3">
+                                            <% if (item.color) { %>
+                                                <div>
+                                                    <small class="text-muted">Color:</small>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="color-dot me-1" 
+                                                             style="background-color: <%= item.color.code || '#000000' %>; 
+                                                                    width: 15px; height: 15px; border-radius: 50%;"></div>
+                                                        <small><%= item.color.name %></small>
+                                                    </div>
+                                                </div>
+                                            <% } %>
+                                            
+                                            <% if (item.size) { %>
+                                                <div>
+                                                    <small class="text-muted">Size:</small>
+                                                    <small class="d-block">US <%= item.size %></small>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Quantity -->
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center">
+                                            <button class="btn btn-outline-dark btn-sm quantity-btn decrease" 
+                                                    onclick="updateQuantity('<%= item._id %>', -1)">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <input type="number" 
+                                                   class="form-control text-center quantity-input mx-2" 
+                                                   value="<%= item.quantity %>" 
+                                                   min="1" 
+                                                   max="10"
+                                                   style="width: 60px;"
+                                                   onchange="updateQuantityInput('<%= item._id %>', this.value)">
+                                            <button class="btn btn-outline-dark btn-sm quantity-btn increase" 
+                                                    onclick="updateQuantity('<%= item._id %>', 1)">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted mt-2 d-block">
+                                            Price: $<%= item.price.toFixed(2) %> each
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- Price and Actions -->
+                                    <div class="col-md-3 text-end">
+                                        <div class="mb-3">
+                                            <h5 class="text-gold item-total">
+                                                $<%= (item.price * item.quantity).toFixed(2) %>
+                                            </h5>
+                                        </div>
+                                        <div class="d-flex justify-content-end gap-2">
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="removeItem('<%= item._id %>')"
+                                                    title="Remove item">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            <button class="btn btn-outline-dark btn-sm" 
+                                                    onclick="moveToWishlist('<%= item._id %>')"
+                                                    title="Move to Wishlist">
+                                                <i class="far fa-heart"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+                
+                <!-- Continue Shopping -->
+                <div class="mt-4">
+                    <a href="/products" class="btn btn-outline-dark">
+                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="card royal-border sticky-top" style="top: 100px;">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Price Breakdown -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal</span>
+                                <span class="fw-bold" id="cart-subtotal">$<%= cart.totalAmount.toFixed(2) %></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Shipping</span>
+                                <span class="fw-bold" id="cart-shipping">
+                                    <%= cart.totalAmount > 100 ? 'FREE' : '$10.00' %>
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Tax (10%)</span>
+                                <span class="fw-bold" id="cart-tax">$<%= (cart.totalAmount * 0.1).toFixed(2) %></span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="fw-bold">Total</span>
+                                <span class="h4 text-gold fw-bold" id="cart-total">
+                                    $<%= (cart.totalAmount + (cart.totalAmount > 100 ? 0 : 10) + (cart.totalAmount * 0.1)).toFixed(2) %>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Promo Code -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">Promo Code</h6>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Enter promo code" id="promoCode">
+                                <button class="btn btn-outline-gold" onclick="applyPromoCode()">Apply</button>
+                            </div>
+                            <div id="promoMessage" class="mt-2 small"></div>
+                        </div>
+                        
+                        <!-- Checkout Button -->
+                        <div class="d-grid mb-3">
+                            <button class="btn btn-gold btn-lg py-3" onclick="proceedToCheckout()">
+                                <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                            </button>
+                        </div>
+                        
+                        <!-- Payment Methods -->
+                        <div class="text-center mb-4">
+                            <small class="text-muted d-block mb-2">We accept</small>
+                            <div class="d-flex justify-content-center gap-2">
+                                <i class="fab fa-cc-visa fa-2x text-primary"></i>
+                                <i class="fab fa-cc-mastercard fa-2x text-danger"></i>
+                                <i class="fab fa-cc-amex fa-2x text-info"></i>
+                                <i class="fab fa-cc-paypal fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Secure Checkout Info -->
+                        <div class="alert alert-light border small">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shield-alt text-success me-2"></i>
+                                <div>
+                                    <strong>Secure Checkout</strong>
+                                    <p class="mb-0">Your payment information is encrypted and secure.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cart Features -->
+                <div class="mt-4">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-truck fa-2x text-gold mb-3"></i>
+                                    <h6 class="mb-2">Free Shipping</h6>
+                                    <p class="text-muted small mb-0">On orders over $100</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-undo-alt fa-2x text-gold mb-3"></i>
+                                    <h6 class="mb-2">Easy Returns</h6>
+                                    <p class="text-muted small mb-0">30-day return policy</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-shield-alt fa-2x text-gold mb-3"></i>
+                                    <h6 class="mb-2">Secure Payment</h6>
+                                    <p class="text-muted small mb-0">100% secure payment</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    <% } else { %>
+        <!-- Empty Cart -->
+        <div class="text-center py-5">
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
+                <h4 class="mb-3">Your cart is empty</h4>
+                <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/products" class="btn btn-gold">
+                        <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+                    </a>
+                    <% if (user) { %>
+                        <a href="/orders" class="btn btn-outline-dark">
+                            <i class="fas fa-history me-2"></i>View Order History
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<!-- Clear Cart Modal -->
+<div class="modal fade" id="clearCartModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Clear Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-4"></i>
+                <h4 class="mb-3">Are you sure?</h4>
+                <p class="text-muted">This will remove all items from your cart. This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmClearCart()">Clear Cart</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Move to Wishlist Modal -->
+<div class="modal fade" id="wishlistModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="royal-icon mb-4 mx-auto">
+                    <i class="fas fa-heart fa-2x"></i>
+                </div>
+                <h4 class="mb-3">Moved to Wishlist!</h4>
+                <p class="text-muted mb-4">Item has been successfully moved to your wishlist.</p>
+                <div class="d-grid gap-2">
+                    <a href="/wishlist" class="btn btn-gold">View Wishlist</a>
+                    <button class="btn btn-outline-dark" data-bs-dismiss="modal">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cart Management Functions
+let currentItemId = null;
+
+// Update quantity by button click
+function updateQuantity(itemId, delta) {
+    const itemElement = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    const quantityInput = itemElement.querySelector('.quantity-input');
+    let quantity = parseInt(quantityInput.value);
+    
+    quantity += delta;
+    
+    // Validate min and max
+    if (quantity < 1) quantity = 1;
+    if (quantity > 10) quantity = 10;
+    
+    // Update input value
+    quantityInput.value = quantity;
+    
+    // Send update request
+    sendQuantityUpdate(itemId, quantity);
+}
+
+// Update quantity by input change
+function updateQuantityInput(itemId, value) {
+    let quantity = parseInt(value);
+    
+    // Validate min and max
+    if (quantity < 1) quantity = 1;
+    if (quantity > 10) quantity = 10;
+    
+    // Update input value if it was changed
+    const itemElement = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    const quantityInput = itemElement.querySelector('.quantity-input');
+    quantityInput.value = quantity;
+    
+    // Send update request
+    sendQuantityUpdate(itemId, quantity);
+}
+
+// Send quantity update to server
+function sendQuantityUpdate(itemId, quantity) {
+    // Show loading state
+    const itemElement = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    const price = parseFloat(itemElement.dataset.price);
+    
+    fetch(`/cart/update/${itemId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity: quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update item total
+            const itemTotal = price * quantity;
+            itemElement.querySelector('.item-total').textContent = '$' + itemTotal.toFixed(2);
+            
+            // Update cart summary
+            updateCartSummary(data.totalAmount);
+            
+            // Update cart count in navbar
+            updateCartCount();
+            
+            showNotification('Quantity updated successfully', 'success');
+        } else {
+            showNotification(data.error || 'Failed to update quantity', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+// Remove item from cart
+function removeItem(itemId) {
+    if (confirm('Are you sure you want to remove this item from your cart?')) {
+        fetch(`/cart/remove/${itemId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove item from DOM
+                const itemElement = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+                itemElement.remove();
+                
+                // Update cart summary
+                updateCartSummary(data.totalAmount);
+                
+                // Update cart count in navbar
+                updateCartCount();
+                
+                // Check if cart is empty
+                const cartItems = document.querySelectorAll('.cart-item');
+                if (cartItems.length === 0) {
+                    location.reload(); // Reload to show empty cart message
+                }
+                
+                showNotification('Item removed from cart', 'success');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred', 'error');
+        });
+    }
+}
+
+// Move item to wishlist
+function moveToWishlist(itemId) {
+    currentItemId = itemId;
+    
+    fetch(`/cart/move-to-wishlist/${itemId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Remove item from cart
+            const itemElement = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+            itemElement.remove();
+            
+            // Update cart summary
+            updateCartSummary(data.totalAmount);
+            
+            // Update cart count in navbar
+            updateCartCount();
+            
+            // Show success modal
+            const modal = new bootstrap.Modal(document.getElementById('wishlistModal'));
+            modal.show();
+            
+            // Check if cart is empty
+            const cartItems = document.querySelectorAll('.cart-item');
+            if (cartItems.length === 0) {
+                setTimeout(() => {
+                    location.reload(); // Reload to show empty cart message
+                }, 2000);
+            }
+        } else {
+            showNotification(data.error || 'Failed to move to wishlist', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+// Clear cart
+function clearCart() {
+    const modal = new bootstrap.Modal(document.getElementById('clearCartModal'));
+    modal.show();
+}
+
+function confirmClearCart() {
+    fetch('/cart/clear', {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('clearCartModal'));
+            modal.hide();
+            
+            // Reload page to show empty cart
+            location.reload();
+            
+            showNotification('Cart cleared successfully', 'success');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+// Apply promo code
+function applyPromoCode() {
+    const promoCode = document.getElementById('promoCode').value.trim();
+    const promoMessage = document.getElementById('promoMessage');
+    
+    if (!promoCode) {
+        promoMessage.innerHTML = '<span class="text-danger">Please enter a promo code</span>';
+        return;
+    }
+    
+    // Simulate promo code validation
+    // In a real application, you would make an API call here
+    const validPromoCodes = {
+        'ROYAL10': 10,
+        'WELCOME15': 15,
+        'SAVE20': 20
+    };
+    
+    if (validPromoCodes[promoCode.toUpperCase()]) {
+        const discount = validPromoCodes[promoCode.toUpperCase()];
+        const subtotal = <%= cart.totalAmount %>;
+        const discountAmount = (subtotal * discount / 100).toFixed(2);
+        
+        promoMessage.innerHTML = `<span class="text-success">Promo code applied! You saved $${discountAmount}</span>`;
+        
+        // Update totals with discount
+        updateCartSummaryWithDiscount(subtotal, discount);
+    } else {
+        promoMessage.innerHTML = '<span class="text-danger">Invalid promo code</span>';
+    }
+}
+
+// Update cart summary with discount
+function updateCartSummaryWithDiscount(subtotal, discountPercent) {
+    const discount = subtotal * discountPercent / 100;
+    const shipping = subtotal > 100 ? 0 : 10;
+    const tax = (subtotal - discount) * 0.1;
+    const total = subtotal - discount + shipping + tax;
+    
+    // Update display
+    document.getElementById('cart-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('cart-shipping').textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+    document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+    
+    // Add discount line
+    const summaryDiv = document.querySelector('.card-body .mb-4');
+    let discountLine = summaryDiv.querySelector('.discount-line');
+    
+    if (!discountLine) {
+        discountLine = document.createElement('div');
+        discountLine.className = 'd-flex justify-content-between mb-2 discount-line';
+        summaryDiv.insertBefore(discountLine, summaryDiv.querySelector('.d-flex.justify-content-between.mb-3'));
+    }
+    
+    discountLine.innerHTML = `
+        <span class="text-muted">Discount</span>
+        <span class="text-success fw-bold">-$${discount.toFixed(2)}</span>
+    `;
+}
+
+// Update cart summary
+function updateCartSummary(totalAmount) {
+    const shipping = totalAmount > 100 ? 0 : 10;
+    const tax = totalAmount * 0.1;
+    const total = totalAmount + shipping + tax;
+    
+    // Update display
+    document.getElementById('cart-subtotal').textContent = `$${totalAmount.toFixed(2)}`;
+    document.getElementById('cart-shipping').textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
+    document.getElementById('cart-tax').textContent = `$${tax.toFixed(2)}`;
+    document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+    
+    // Remove discount line if exists
+    const discountLine = document.querySelector('.discount-line');
+    if (discountLine) {
+        discountLine.remove();
+    }
+    
+    // Clear promo code
+    document.getElementById('promoCode').value = '';
+    document.getElementById('promoMessage').innerHTML = '';
+}
+
+// Proceed to checkout
+function proceedToCheckout() {
+    // Check if user is logged in
+    <% if (!user) { %>
+        showNotification('Please login to proceed to checkout', 'warning');
+        setTimeout(() => {
+            window.location.href = '/login?redirect=/cart';
+        }, 1500);
+        return;
+    <% } %>
+    
+    // Check if cart is not empty
+    const cartItems = document.querySelectorAll('.cart-item');
+    if (cartItems.length === 0) {
+        showNotification('Your cart is empty', 'warning');
+        return;
+    }
+    
+    // Redirect to checkout page
+    window.location.href = '/checkout';
+}
+
+// Update cart count in navbar
+function updateCartCount() {
+    fetch('/cart/count')
+        .then(response => response.json())
+        .then(data => {
+            const cartBadge = document.querySelector('.cart-count-badge');
+            if (cartBadge) {
+                if (data.count > 0) {
+                    cartBadge.textContent = data.count;
+                    cartBadge.style.display = 'flex';
+                } else {
+                    cartBadge.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error updating cart count:', error);
+        });
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    `;
+    
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Make cart summary sticky
+    const cartSummary = document.querySelector('.sticky-top');
+    if (cartSummary) {
+        const updateStickyPosition = () => {
+            const headerHeight = 76; // Navbar height
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > headerHeight) {
+                cartSummary.style.top = (headerHeight + 20) + 'px';
+            } else {
+                cartSummary.style.top = '100px';
+            }
+        };
+        
+        window.addEventListener('scroll', updateStickyPosition);
+        updateStickyPosition();
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl + Enter to checkout
+    if (e.ctrlKey && e.key === 'Enter') {
+        proceedToCheckout();
+    }
+    
+    // Escape to clear promo code
+    if (e.key === 'Escape') {
+        document.getElementById('promoCode').value = '';
+        document.getElementById('promoMessage').innerHTML = '';
+    }
+});
+</script>
+
+<style>
+/* Cart Styles */
+.cart-item {
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.quantity-input {
+    -moz-appearance: textfield;
+}
+
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.color-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 1px solid #dee2e6;
+}
+
+.sticky-top {
+    z-index: 100;
+}
+
+.empty-cart {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .cart-item .row > div {
+        margin-bottom: 15px;
+    }
+    
+    .cart-item .col-md-2 {
+        text-align: center;
+    }
+    
+    .cart-item .col-md-2 img {
+        height: 80px;
+    }
+    
+    .sticky-top {
+        position: static !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .quantity-input {
+        width: 50px !important;
+    }
+    
+    .cart-item .d-flex.gap-3 {
+        flex-direction: column;
+        gap: 10px !important;
+    }
+    
+    .breadcrumb {
+        font-size: 0.8rem;
+    }
+}
+
+/* Animation for cart updates */
+@keyframes highlight {
+    0% { background-color: rgba(255, 215, 0, 0.3); }
+    100% { background-color: transparent; }
+}
+
+.highlight {
+    animation: highlight 1s ease;
+}
+</style>

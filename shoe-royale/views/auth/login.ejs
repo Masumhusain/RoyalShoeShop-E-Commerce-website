@@ -1,0 +1,238 @@
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Page Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-gold mb-3">Welcome Back</h1>
+                <p class="text-muted">Sign in to your Royal Footwear account</p>
+            </div>
+            
+            <!-- Login Card -->
+            <div class="card royal-border">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Login Form -->
+                    <form action="/login" method="POST" id="loginForm">
+                        <!-- Email -->
+                        <div class="mb-4">
+                            <label for="email" class="form-label fw-bold">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-envelope text-muted"></i>
+                                </span>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="Enter your email"
+                                       required
+                                       value="<%= typeof email !== 'undefined' ? email : '' %>">
+                            </div>
+                        </div>
+                        
+                        <!-- Password -->
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-bold">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="fas fa-lock text-muted"></i>
+                                </span>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       placeholder="Enter your password"
+                                       required>
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe">
+                                    <label class="form-check-label text-muted small" for="rememberMe">
+                                        Remember me
+                                    </label>
+                                </div>
+                                <a href="/forgot-password" class="small text-decoration-none text-gold">
+                                    Forgot Password?
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-gold btn-lg py-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                            </button>
+                        </div>
+                        
+                        <!-- Divider -->
+                        <div class="position-relative text-center mb-4">
+                            <hr>
+                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted">
+                                OR
+                            </span>
+                        </div>
+                        
+                        <!-- Social Login -->
+                        <div class="mb-4">
+                            <div class="d-grid gap-2">
+                                <a href="/auth/google" class="btn btn-outline-danger">
+                                    <i class="fab fa-google me-2"></i>Continue with Google
+                                </a>
+                                <a href="#" class="btn btn-outline-primary disabled">
+                                    <i class="fab fa-facebook-f me-2"></i>Continue with Facebook
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Register Link -->
+                        <div class="text-center">
+                            <p class="text-muted mb-0">
+                                Don't have an account? 
+                                <a href="/register" class="text-gold fw-bold text-decoration-none">
+                                    Sign up now
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Additional Info -->
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    By signing in, you agree to our 
+                    <a href="/terms" class="text-decoration-none">Terms of Service</a> and 
+                    <a href="/privacy" class="text-decoration-none">Privacy Policy</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const passwordInput = document.getElementById('password');
+    const icon = this.querySelector('i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+});
+
+// Form validation
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    
+    if (!email || !password) {
+        e.preventDefault();
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    
+    if (!isValidEmail(email)) {
+        e.preventDefault();
+        showNotification('Please enter a valid email address', 'error');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing in...';
+    submitBtn.disabled = true;
+    
+    // Re-enable button after 3 seconds if still on page
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 3000);
+});
+
+// Email validation
+function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    `;
+    
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Auto-focus email field
+document.addEventListener('DOMContentLoaded', function() {
+    const emailField = document.getElementById('email');
+    if (emailField) {
+        emailField.focus();
+    }
+    
+    // Check for URL parameters for error messages
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    if (error) {
+        showNotification(error, 'error');
+    }
+});
+</script>
+
+<style>
+/* Login Page Styles */
+.royal-border {
+    border: 2px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(45deg, var(--accent-color), #ffed4e) border-box;
+}
+
+.input-group-text {
+    border-right: none;
+}
+
+.form-control:focus + .input-group-text {
+    border-color: var(--accent-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--dark-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 2rem !important;
+    }
+    
+    .btn-lg {
+        padding: 12px !important;
+    }
+}
+</style>

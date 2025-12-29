@@ -1,17 +1,48 @@
 <!-- Hero Section -->
 <section class="hero-section royal-gradient">
     <div class="container">
-        <div class="row align-items-center min-vh-75">
-            <div class="col-lg-6">
-                <h1 class="display-3 fw-bold text-white mb-4">Walk Like Royalty</h1>
-                <p class="lead text-white mb-4">Discover our exclusive collection of premium footwear, crafted with precision and luxury in mind.</p>
-                <a href="/products" class="btn btn-gold btn-lg px-5">
-                    <i class="fas fa-shopping-bag me-2"></i>Shop Collection
-                </a>
+        <div class="row align-items-center min-vh-80 py-5">
+            <div class="col-lg-6 order-lg-1 order-2">
+                <h1 class="display-3 fw-bold text-white mb-4 animate-slide-up">Walk Like <span class="text-gold">Royalty</span></h1>
+                <p class="lead text-white mb-4 opacity-75 animate-slide-up delay-1">Discover our exclusive collection of premium footwear, crafted with precision and luxury in mind for the modern aristocrat.</p>
+                <div class="d-flex flex-wrap gap-3 animate-slide-up delay-2">
+                    <a href="/products" class="btn btn-gold btn-lg px-5 py-3">
+                        <i class="fas fa-shopping-bag me-2"></i>Shop Collection
+                    </a>
+                    <a href="#featured" class="btn btn-outline-light btn-lg px-5 py-3">
+                        <i class="fas fa-crown me-2"></i>Featured
+                    </a>
+                </div>
+                <div class="mt-5 animate-fade-in delay-3">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h3 class="text-gold fw-bold mb-1">500+</h3>
+                            <p class="text-white small mb-0">Styles</p>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="text-gold fw-bold mb-1">1K+</h3>
+                            <p class="text-white small mb-0">Happy Customers</p>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="text-gold fw-bold mb-1">50+</h3>
+                            <p class="text-white small mb-0">Brands</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-lg-6">
-                <div class="hero-image-container">
-                    <img src="/images/hero-shoe.png" alt="Premium Shoes" class="img-fluid hero-image">
+            <div class="col-lg-6 order-lg-2 order-1 mb-lg-0 mb-5">
+                <div class="hero-image-container position-relative animate-float">
+                    <!-- Database से hero image लें या default use करें -->
+                    <img src="<%= heroImage || '/images/hero-shoe.png' %>" 
+                         alt="Premium Shoes" 
+                         class="img-fluid hero-image" 
+                         onerror="this.src='/images/default-shoe.jpg'">
+                    <div class="floating-badge bg-white shadow-lg">
+                        <div class="text-center p-2">
+                            <h5 class="text-dark mb-0 fw-bold">Featured</h5>
+                            <small class="text-muted">Trending Now</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -22,58 +53,177 @@
 <section class="py-5">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="section-title">Shop by Category</h2>
-            <p class="text-muted">Find the perfect pair for every occasion</p>
+            <h2 class="section-title animate-slide-up">Shop by Category</h2>
+            <p class="text-muted animate-slide-up delay-1">Find the perfect pair for every occasion</p>
         </div>
         
         <div class="row g-4">
-            <div class="col-md-3">
-                <div class="category-card">
+            <!-- Sneakers -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card animate-fade-in">
                     <a href="/products?category=sneakers" class="text-decoration-none">
-                        <div class="category-image">
-                            <img src="/images/category-sneakers.jpg" alt="Sneakers" class="img-fluid">
+                        <div class="category-image position-relative overflow-hidden rounded-4">
+                            <img src="<%= categoryImages && categoryImages.sneakers ? categoryImages.sneakers : '/images/category-sneakers.jpg' %>" 
+                                 alt="Sneakers" 
+                                 class="img-fluid category-img" 
+                                 onerror="this.src='/images/default-shoe.jpg'">
+                            <div class="category-overlay"></div>
+                            <div class="category-badge">
+                                <span class="badge bg-dark">Trending</span>
+                            </div>
                         </div>
-                        <div class="category-content text-center py-3">
-                            <h5 class="mb-0">Sneakers</h5>
+                        <div class="category-content text-center py-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-running fa-2x text-primary"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">Sneakers</h5>
+                            <p class="text-muted small mb-0">Comfort meets style</p>
+                            <div class="mt-3">
+                                <span class="text-primary">Shop Now <i class="fas fa-arrow-right ms-1"></i></span>
+                            </div>
                         </div>
                     </a>
                 </div>
             </div>
             
-            <div class="col-md-3">
-                <div class="category-card">
+            <!-- Formal -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card animate-fade-in delay-1">
                     <a href="/products?category=formal" class="text-decoration-none">
-                        <div class="category-image">
-                            <img src="/images/category-formal.jpg" alt="Formal Shoes" class="img-fluid">
+                        <div class="category-image position-relative overflow-hidden rounded-4">
+                            <img src="<%= categoryImages && categoryImages.formal ? categoryImages.formal : '/images/category-formal.jpg' %>" 
+                                 alt="Formal Shoes" 
+                                 class="img-fluid category-img" 
+                                 onerror="this.src='/images/default-shoe.jpg'">
+                            <div class="category-overlay"></div>
                         </div>
-                        <div class="category-content text-center py-3">
-                            <h5 class="mb-0">Formal</h5>
+                        <div class="category-content text-center py-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-user-tie fa-2x text-secondary"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">Formal</h5>
+                            <p class="text-muted small mb-0">Elegance redefined</p>
+                            <div class="mt-3">
+                                <span class="text-secondary">Shop Now <i class="fas fa-arrow-right ms-1"></i></span>
+                            </div>
                         </div>
                     </a>
                 </div>
             </div>
             
-            <div class="col-md-3">
-                <div class="category-card">
+            <!-- Boots -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card animate-fade-in delay-2">
                     <a href="/products?category=boots" class="text-decoration-none">
-                        <div class="category-image">
-                            <img src="/images/category-boots.jpg" alt="Boots" class="img-fluid">
+                        <div class="category-image position-relative overflow-hidden rounded-4">
+                            <img src="<%= categoryImages && categoryImages.boots ? categoryImages.boots : '/images/category-boots.jpg' %>" 
+                                 alt="Boots" 
+                                 class="img-fluid category-img" 
+                                 onerror="this.src='/images/default-shoe.jpg'">
+                            <div class="category-overlay"></div>
+                            <div class="category-badge">
+                                <span class="badge bg-danger">New</span>
+                            </div>
                         </div>
-                        <div class="category-content text-center py-3">
-                            <h5 class="mb-0">Boots</h5>
+                        <div class="category-content text-center py-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-hiking fa-2x text-success"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">Boots</h5>
+                            <p class="text-muted small mb-0">Adventure ready</p>
+                            <div class="mt-3">
+                                <span class="text-success">Shop Now <i class="fas fa-arrow-right ms-1"></i></span>
+                            </div>
                         </div>
                     </a>
                 </div>
             </div>
             
-            <div class="col-md-3">
-                <div class="category-card">
+            <!-- Sandals -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card animate-fade-in delay-3">
                     <a href="/products?category=sandals" class="text-decoration-none">
-                        <div class="category-image">
-                            <img src="/images/category-sandals.jpg" alt="Sandals" class="img-fluid">
+                        <div class="category-image position-relative overflow-hidden rounded-4">
+                            <img src="<%= categoryImages && categoryImages.sandals ? categoryImages.sandals : '/images/category-sandals.jpg' %>" 
+                                 alt="Sandals" 
+                                 class="img-fluid category-img" 
+                                 onerror="this.src='/images/default-shoe.jpg'">
+                            <div class="category-overlay"></div>
                         </div>
-                        <div class="category-content text-center py-3">
-                            <h5 class="mb-0">Sandals</h5>
+                        <div class="category-content text-center py-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-umbrella-beach fa-2x text-warning"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">Sandals</h5>
+                            <p class="text-muted small mb-0">Summer essentials</p>
+                            <div class="mt-3">
+                                <span class="text-warning">Shop Now <i class="fas fa-arrow-right ms-1"></i></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Sports -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card animate-fade-in">
+                    <a href="/products?category=sports" class="text-decoration-none">
+                        <div class="category-image position-relative overflow-hidden rounded-4">
+                            <img src="<%= categoryImages && categoryImages.sports ? categoryImages.sports : '/images/category-sports.jpg' %>" 
+                                 alt="Sports Shoes" 
+                                 class="img-fluid category-img" 
+                                 onerror="this.src='/images/default-shoe.jpg'">
+                            <div class="category-overlay"></div>
+                        </div>
+                        <div class="category-content text-center py-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-basketball-ball fa-2x text-danger"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">Sports</h5>
+                            <p class="text-muted small mb-0">Performance gear</p>
+                            <div class="mt-3">
+                                <span class="text-danger">Shop Now <i class="fas fa-arrow-right ms-1"></i></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Loafers -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card animate-fade-in delay-1">
+                    <a href="/products?category=loafers" class="text-decoration-none">
+                        <div class="category-image position-relative overflow-hidden rounded-4">
+                            <img src="<%= categoryImages && categoryImages.loafers ? categoryImages.loafers : '/images/category-loafers.jpg' %>" 
+                                 alt="Loafers" 
+                                 class="img-fluid category-img" 
+                                 onerror="this.src='/images/default-shoe.jpg'">
+                            <div class="category-overlay"></div>
+                        </div>
+                        <div class="category-content text-center py-4">
+                            <div class="category-icon mb-3">
+                                <i class="fas fa-gem fa-2x text-info"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">Loafers</h5>
+                            <p class="text-muted small mb-0">Casual luxury</p>
+                            <div class="mt-3">
+                                <span class="text-info">Shop Now <i class="fas fa-arrow-right ms-1"></i></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- View All Categories -->
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="category-card view-all-card animate-fade-in delay-2">
+                    <a href="/products" class="text-decoration-none h-100 d-flex align-items-center justify-content-center">
+                        <div class="text-center py-5">
+                            <div class="view-all-icon mb-3">
+                                <i class="fas fa-plus fa-3x text-gold"></i>
+                            </div>
+                            <h5 class="mb-2 fw-bold">View All</h5>
+                            <p class="text-muted small mb-0">Explore all categories</p>
                         </div>
                     </a>
                 </div>
@@ -83,60 +233,153 @@
 </section>
 
 <!-- Featured Products -->
-<section class="py-5 bg-light">
+<section id="featured" class="py-5 bg-light">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-5">
             <div>
-                <h2 class="section-title">Featured Products</h2>
-                <p class="text-muted">Handpicked selections for the discerning customer</p>
+                <h2 class="section-title animate-slide-up">Featured Products</h2>
+                <p class="text-muted animate-slide-up delay-1">Handpicked selections for the discerning customer</p>
             </div>
-            <a href="/products" class="btn btn-outline-dark">View All</a>
+            <a href="/products" class="btn btn-outline-dark animate-slide-up">
+                View All <i class="fas fa-arrow-right ms-2"></i>
+            </a>
         </div>
         
         <div class="row g-4">
             <% if (featuredProducts && featuredProducts.length > 0) { %>
-                <% featuredProducts.forEach(product => { %>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <img src="<%= product.colors[0]?.images[0] || '/images/nike.jpg' %>" 
-                                     alt="<%= product.name %>" class="img-fluid">
-                                <% if (product.discountPrice) { %>
-                                    <span class="badge bg-danger position-absolute top-0 end-0 m-2">Sale</span>
-                                <% } %>
-                                <% if (product.featured) { %>
-                                    <span class="badge bg-warning position-absolute top-0 start-0 m-2">Featured</span>
-                                <% } %>
-                            </div>
-                            <div class="product-content p-3">
-                                <h6 class="product-title mb-1"><%= product.name %></h6>
-                                <p class="product-brand text-muted small mb-2"><%= product.brand %></p>
+                <% featuredProducts.forEach((product, index) => { 
+                    // Safely get product details
+                    const productName = product.name || 'Product';
+                    const productBrand = product.brand || 'Brand';
+                    const productPrice = parseFloat(product.price) || 0;
+                    const productDiscountPrice = parseFloat(product.discountPrice) || 0;
+                    const productRating = product.rating || 0;
+                    const productReviews = product.reviewsCount || 0;
+                    
+                    // Safely get first image
+                    let productImage = '/images/default-shoe.jpg';
+                    if (product.colors && 
+                        product.colors.length > 0 && 
+                        product.colors[0].images && 
+                        product.colors[0].images.length > 0 &&
+                        product.colors[0].images[0].url) {
+                        productImage = product.colors[0].images[0].url;
+                    }
+                    
+                    // Calculate discount percentage
+                    const discountPercent = productDiscountPrice > 0 && productDiscountPrice < productPrice 
+                        ? Math.round(((productPrice - productDiscountPrice) / productPrice) * 100) 
+                        : 0;
+                %>
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="product-card luxury-card h-100 animate-fade-in" style="animation-delay: <%= index * 0.1 %>s">
+                            <div class="product-image position-relative">
+                                <a href="/products/<%= product._id %>" class="product-image-link">
+                                    <img src="<%= productImage %>" 
+                                         alt="<%= productName %>" 
+                                         class="img-fluid product-main-image"
+                                         onerror="this.src='/images/default-shoe.jpg'">
+                                </a>
                                 
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="product-price">
-                                        <% if (product.discountPrice) { %>
-                                            <span class="text-danger fw-bold">$<%= product.discountPrice %></span>
-                                            <span class="text-muted text-decoration-line-through ms-2">$<%= product.price %></span>
-                                        <% } else { %>
-                                            <span class="fw-bold">$<%= product.price %></span>
-                                        <% } %>
-                                    </div>
-                                    <div class="product-rating">
-                                        <i class="fas fa-star text-warning"></i>
-                                        <span class="small"><%= product.rating %></span>
+                                <!-- Badges -->
+                                <div class="product-badges">
+                                    <% if (discountPercent > 0) { %>
+                                        <span class="badge discount-badge">-<%= discountPercent %>%</span>
+                                    <% } %>
+                                    <% if (product.featured) { %>
+                                        <span class="badge featured-badge">
+                                            <i class="fas fa-crown me-1"></i> Featured
+                                        </span>
+                                    <% } %>
+                                    <% 
+                                        // Check stock
+                                        let totalStock = 0;
+                                        if (product.sizes && Array.isArray(product.sizes)) {
+                                            totalStock = product.sizes.reduce((sum, size) => sum + (parseInt(size.quantity) || 0), 0);
+                                        }
+                                        if (totalStock === 0) { 
+                                    %>
+                                        <span class="badge stock-badge">Out of Stock</span>
+                                    <% } %>
+                                </div>
+                                
+                                <!-- Quick Actions -->
+                                <div class="quick-actions">
+                                    <button class="quick-action-btn wishlist-btn" title="Add to Wishlist">
+                                        <i class="far fa-heart"></i>
+                                    </button>
+                                    <button class="quick-action-btn view-btn" title="Quick View" onclick="window.location.href='/products/<%= product._id %>'">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="product-content p-4">
+                                <!-- Brand -->
+                                <div class="product-brand mb-2">
+                                    <span class="badge bg-light text-dark"><%= productBrand %></span>
+                                </div>
+                                
+                                <!-- Title -->
+                                <h6 class="product-title mb-2">
+                                    <a href="/products/<%= product._id %>" class="text-decoration-none text-dark">
+                                        <%= productName.length > 50 ? productName.substring(0, 50) + '...' : productName %>
+                                    </a>
+                                </h6>
+                                
+                                <!-- Rating -->
+                                <div class="product-rating mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stars">
+                                            <% for(let i = 1; i <= 5; i++) { %>
+                                                <% if (i <= Math.floor(productRating)) { %>
+                                                    <i class="fas fa-star text-warning"></i>
+                                                <% } else if (i === Math.ceil(productRating) && productRating % 1 !== 0) { %>
+                                                    <i class="fas fa-star-half-alt text-warning"></i>
+                                                <% } else { %>
+                                                    <i class="far fa-star text-warning"></i>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
+                                        <span class="ms-2 text-muted small">(<%= productReviews %>)</span>
                                     </div>
                                 </div>
                                 
-                                <a href="/products/<%= product._id %>" class="btn btn-outline-dark w-100">
-                                    View Details
-                                </a>
+                                <!-- Price -->
+                                <div class="product-price mb-4">
+                                    <% if (productDiscountPrice > 0 && productDiscountPrice < productPrice) { %>
+                                        <div class="d-flex align-items-center">
+                                            <h5 class="text-danger fw-bold mb-0">₹<%= productDiscountPrice.toFixed(2) %></h5>
+                                            <h6 class="text-muted text-decoration-line-through ms-3 mb-0">₹<%= productPrice.toFixed(2) %></h6>
+                                        </div>
+                                        <div class="save-amount text-success small">
+                                            Save ₹<%= (productPrice - productDiscountPrice).toFixed(2) %>
+                                        </div>
+                                    <% } else { %>
+                                        <h5 class="fw-bold mb-0">₹<%= productPrice.toFixed(2) %></h5>
+                                    <% } %>
+                                </div>
+                                
+                                <!-- Action Button -->
+                                <div class="product-action">
+                                    <a href="/products/<%= product._id %>" class="btn btn-outline-dark w-100">
+                                        <i class="fas fa-shopping-cart me-2"></i>View Details
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 <% }); %>
             <% } else { %>
                 <div class="col-12 text-center py-5">
-                    <p class="text-muted">No featured products available</p>
+                    <div class="empty-state">
+                        <i class="fas fa-shoe-prints fa-3x text-muted mb-4"></i>
+                        <h4 class="mb-3">No Featured Products</h4>
+                        <p class="text-muted">Check back soon for our latest collections</p>
+                        <a href="/products" class="btn btn-gold mt-3">
+                            <i class="fas fa-store me-2"></i>Browse All Products
+                        </a>
+                    </div>
                 </div>
             <% } %>
         </div>
@@ -144,38 +387,603 @@
 </section>
 
 <!-- Royal Features -->
-<section class="py-5">
+<section class="py-5 royal-features">
     <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title animate-slide-up">Why Choose Royal Footwear</h2>
+            <p class="text-muted animate-slide-up delay-1">Experience luxury shopping with unmatched benefits</p>
+        </div>
+        
         <div class="row g-4">
-            <div class="col-md-4">
-                <div class="text-center">
-                    <div class="feature-icon royal-icon mb-3">
-                        <i class="fas fa-shield-alt fa-2x"></i>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4 animate-fade-in">
+                    <div class="feature-icon-wrapper mb-4">
+                        <div class="feature-icon royal-icon">
+                            <i class="fas fa-award fa-2x"></i>
+                        </div>
                     </div>
-                    <h5 class="mb-2">Premium Quality</h5>
-                    <p class="text-muted">Crafted with the finest materials for lasting comfort and style</p>
+                    <h5 class="mb-3">Premium Quality</h5>
+                    <p class="text-muted mb-0">Crafted with the finest materials for lasting comfort and style. Every pair undergoes rigorous quality checks.</p>
                 </div>
             </div>
             
-            <div class="col-md-4">
-                <div class="text-center">
-                    <div class="feature-icon royal-icon mb-3">
-                        <i class="fas fa-truck fa-2x"></i>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4 animate-fade-in delay-1">
+                    <div class="feature-icon-wrapper mb-4">
+                        <div class="feature-icon royal-icon">
+                            <i class="fas fa-shipping-fast fa-2x"></i>
+                        </div>
                     </div>
-                    <h5 class="mb-2">Free Shipping</h5>
-                    <p class="text-muted">Free delivery on all orders over $100</p>
+                    <h5 class="mb-3">Free & Fast Shipping</h5>
+                    <p class="text-muted mb-0">Free delivery on all orders over ₹1000. Express shipping available for urgent needs.</p>
                 </div>
             </div>
             
-            <div class="col-md-4">
-                <div class="text-center">
-                    <div class="feature-icon royal-icon mb-3">
-                        <i class="fas fa-undo-alt fa-2x"></i>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4 animate-fade-in delay-2">
+                    <div class="feature-icon-wrapper mb-4">
+                        <div class="feature-icon royal-icon">
+                            <i class="fas fa-undo-alt fa-2x"></i>
+                        </div>
                     </div>
-                    <h5 class="mb-2">Easy Returns</h5>
-                    <p class="text-muted">30-day return policy for your peace of mind</p>
+                    <h5 class="mb-3">Easy Returns</h5>
+                    <p class="text-muted mb-0">30-day hassle-free return policy. Your satisfaction is our priority.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4 animate-fade-in delay-3">
+                    <div class="feature-icon-wrapper mb-4">
+                        <div class="feature-icon royal-icon">
+                            <i class="fas fa-headset fa-2x"></i>
+                        </div>
+                    </div>
+                    <h5 class="mb-3">24/7 Support</h5>
+                    <p class="text-muted mb-0">Round-the-clock customer service. We're here to help whenever you need us.</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Newsletter -->
+<section class="py-5 bg-dark text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-lg-0 mb-4">
+                <h2 class="fw-bold mb-3">Join the Royal Family</h2>
+                <p class="text-light mb-0">Subscribe to our newsletter for exclusive offers, new arrivals, and style inspiration.</p>
+            </div>
+            <div class="col-lg-6">
+                <form class="newsletter-form">
+                    <div class="input-group">
+                        <input type="email" class="form-control form-control-lg" placeholder="Your email address" required>
+                        <button class="btn btn-gold btn-lg" type="submit">
+                            Subscribe <i class="fas fa-paper-plane ms-2"></i>
+                        </button>
+                    </div>
+                    <small class="text-light opacity-75 mt-2 d-block">By subscribing, you agree to our Privacy Policy</small>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add this CSS -->
+<style>
+/* Hero Section */
+.hero-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-image-container {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hero-image {
+    transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));
+    transition: transform 0.5s ease;
+}
+
+.hero-image:hover {
+    transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+}
+
+.floating-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    border-radius: 15px;
+    padding: 15px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Category Cards */
+.category-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    border: 1px solid #f0f0f0;
+}
+
+.category-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    border-color: var(--royal-gold);
+}
+
+.category-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.category-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.category-card:hover .category-img {
+    transform: scale(1.1);
+}
+
+.category-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7));
+}
+
+.category-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2;
+}
+
+.category-content {
+    background: white;
+    position: relative;
+    z-index: 1;
+}
+
+.category-icon {
+    color: var(--royal-gold);
+}
+
+.view-all-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.view-all-card:hover {
+    border-color: var(--royal-gold);
+    background: linear-gradient(135deg, #fff9e6 0%, #fff0b3 100%);
+}
+
+.view-all-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2);
+}
+
+/* Product Cards */
+.luxury-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+.luxury-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.product-image {
+    height: 250px;
+    overflow: hidden;
+    background: #f8f9fa;
+    position: relative;
+}
+
+.product-image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.product-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 20px;
+    transition: transform 0.5s ease;
+}
+
+.luxury-card:hover .product-main-image {
+    transform: scale(1.05);
+}
+
+.product-badges {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.discount-badge {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.featured-badge {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.stock-badge {
+    background: #6c757d;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.quick-actions {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+}
+
+.luxury-card:hover .quick-actions {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.quick-action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.quick-action-btn:hover {
+    background: var(--royal-gold);
+    color: #212529;
+    transform: scale(1.1);
+}
+
+.product-content {
+    background: white;
+}
+
+.product-brand .badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.product-title {
+    font-weight: 600;
+    line-height: 1.4;
+    min-height: 48px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-title a:hover {
+    color: var(--royal-gold) !important;
+}
+
+.product-rating .stars {
+    color: #ffc107;
+}
+
+.save-amount {
+    font-weight: 500;
+}
+
+.product-action .btn {
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.product-action .btn:hover {
+    background: var(--royal-gold);
+    border-color: var(--royal-gold);
+    color: #212529;
+}
+
+/* Features */
+.royal-features {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.feature-card {
+    background: white;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    height: 100%;
+    border: 1px solid #f0f0f0;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    border-color: var(--royal-gold);
+}
+
+.feature-icon-wrapper {
+    display: inline-block;
+    position: relative;
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--royal-gold) 0%, #ffed4e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #212529;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    transform: scale(1.1) rotate(10deg);
+}
+
+/* Newsletter */
+.newsletter-form .input-group {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.newsletter-form .form-control {
+    border: none;
+    padding: 15px 25px;
+    font-size: 1rem;
+}
+
+.newsletter-form .form-control:focus {
+    box-shadow: none;
+}
+
+.newsletter-form .btn {
+    border-radius: 0 12px 12px 0;
+    padding: 15px 30px;
+}
+
+/* Animations */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes floatImage {
+    0%, 100% {
+        transform: perspective(1000px) rotateY(-10deg) rotateX(5deg) translateY(0);
+    }
+    50% {
+        transform: perspective(1000px) rotateY(-10deg) rotateX(5deg) translateY(-10px);
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.8s ease forwards;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.8s ease forwards;
+}
+
+.animate-float {
+    animation: floatImage 6s ease-in-out infinite;
+}
+
+.delay-1 { animation-delay: 0.2s; opacity: 0; }
+.delay-2 { animation-delay: 0.4s; opacity: 0; }
+.delay-3 { animation-delay: 0.6s; opacity: 0; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-section .min-vh-80 {
+        min-height: auto !important;
+        padding-top: 60px;
+        padding-bottom: 60px;
+    }
+    
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .category-image {
+        height: 180px;
+    }
+    
+    .product-image {
+        height: 200px;
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .feature-icon i {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .display-3 {
+        font-size: 2rem;
+    }
+    
+    .btn-lg {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+    
+    .category-card, .feature-card {
+        border-radius: 10px;
+    }
+}
+</style>
+
+<!-- Add this JavaScript for interactivity -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe all animated elements
+    document.querySelectorAll('.animate-slide-up, .animate-fade-in').forEach(el => {
+        observer.observe(el);
+    });
+
+    // Wishlist functionality
+    document.querySelectorAll('.wishlist-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                this.style.color = '#dc3545';
+                showNotification('Added to wishlist!', 'success');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                this.style.color = '';
+                showNotification('Removed from wishlist', 'info');
+            }
+        });
+    });
+
+    // Newsletter form
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+        newsletterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            
+            // Simulate subscription
+            showNotification('Thank you for subscribing!', 'success');
+            this.reset();
+        });
+    }
+
+    // Image error handling
+    document.querySelectorAll('img').forEach(img => {
+        img.addEventListener('error', function() {
+            if (!this.src.includes('/images/default-shoe.jpg')) {
+                this.src = '/images/default-shoe.jpg';
+            }
+        });
+    });
+});
+
+function showNotification(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = `
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+    `;
+    
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+</script>

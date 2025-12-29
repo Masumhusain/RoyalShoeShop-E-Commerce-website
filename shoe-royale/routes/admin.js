@@ -5,6 +5,12 @@ const cloudinary = require('cloudinary').v2;
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
 const upload = require('../middleware/uploadCloudinary');
 const Product = require('../models/Product');
+const User = require('../models/User');
+const Order = require('../models/Order');
+const passport = require('passport');
+// const { getDashboardStats } = require('../utils/dashboardStats');
+
+
 
 // Simple Admin Dashboard with Stats
 router.get('/dashboard', async (req, res) => {
@@ -237,38 +243,77 @@ function formatTimeAgo(date) {
 }
 
 // Admin Products with Real Data
+// GET Admin Products List
 router.get('/products', async (req, res) => {
+  try {
+    console.log('📄 GET /admin/products - Rendering products list');
+    
+    // Admin authentication check
     if (!req.session.user || req.session.user.role !== 'admin') {
-        return res.redirect('/admin-login');
+      req.flash('error_msg', 'Please login as admin first');
+      return res.redirect('/admin-login');
     }
     
-    try {
-        const Product = mongoose.model('Product');
-        const products = await Product.find().sort({ createdAt: -1 }).lean();
-        
-        res.render('admin/products', {
-            title: 'Product Management',
-            user: req.session.user,
-            currentPage: 'products',
-            products: products,
-            success_msg: req.session.success_msg || '',
-            error_msg: req.session.error_msg || ''
-        });
-        
-        // Clear flash messages
-        delete req.session.success_msg;
-        delete req.session.error_msg;
-        
-    } catch (error) {
-        console.error("Error loading products:", error);
-        res.render('admin/products', {
-            title: 'Product Management',
-            user: req.session.user,
-            currentPage: 'products',
-            products: [],
-            error_msg: 'Error loading products: ' + error.message
-        });
+    const Product = mongoose.model('Product');
+    
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    
+    // Build query based on filters
+    let query = {};
+    
+    // Category filter
+    if (req.query.category) {
+      query.category = req.query.category;
     }
+    
+    // Search filter
+    if (req.query.search) {
+      query.name = { $regex: req.query.search, $options: 'i' };
+    }
+    
+    // Status filter
+    if (req.query.status === 'in_stock') {
+      query.$expr = { $gt: [{ $sum: "$sizes.quantity" }, 0] };
+    } else if (req.query.status === 'out_of_stock') {
+      query.$expr = { $eq: [{ $sum: "$sizes.quantity" }, 0] };
+    } else if (req.query.status === 'featured') {
+      query.featured = true;
+    }
+    
+    // Get total count
+    const totalProducts = await Product.countDocuments(query);
+    const totalPages = Math.ceil(totalProducts / limit);
+    
+    // Get products with sorting (newest first)
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    
+    console.log(`✅ Found ${products.length} products`);
+    
+    // Data for template
+    const templateData = {
+      title: 'Manage Products',
+      user: req.session.user,
+      products: products,
+      currentPage: page,
+      totalPages: totalPages,
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
+    };
+    
+    res.render('admin/products', templateData);
+    
+  } catch (error) {
+    console.error('❌ Error loading products list:', error);
+    req.flash('error_msg', 'Error loading products');
+    res.redirect('/admin/dashboard');
+  }
 });
 
 // Admin Orders with Real Data
@@ -619,19 +664,33 @@ router.post('/products/create', upload.array('images', 10), async (req, res) => 
   }
 });
 // Admin - Edit Product Page
-router.get('/edit/:id', ensureAdmin, async (req, res) => {
+// GET Edit Product Page
+router.get('/products/edit/:id', async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    console.log('📄 GET /admin/products/edit/:id - Rendering edit form');
+    
+    // Admin authentication check
+    if (!req.session.user || req.session.user.role !== 'admin') {
+      req.flash('error_msg', 'Please login as admin first');
+      return res.redirect('/admin-login');
+    }
+    
+    const productId = req.params.id;
+    const Product = mongoose.model('Product');
+    
+    // Find product by ID
+    const product = await Product.findById(productId);
     
     if (!product) {
       req.flash('error_msg', 'Product not found');
       return res.redirect('/admin/products');
     }
-
-    res.render('/product-edit', {
-      title: 'Edit Product | Admin',
-      user: req.user,
-      product,
+    
+    // Data for the form
+    const formData = {
+      title: `Edit ${product.name}`,
+      user: req.session.user,
+      product: product,
       categories: ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'],
       brands: ['Nike', 'Adidas', 'Puma', 'Reebok', 'Woodland', 'Bata', 'Campus', 'Red Tape', 'Sparx', 'Skechers', 'Crocs', 'Converse', 'Vans'],
       sizes: [6, 7, 8, 9, 10, 11, 12],
@@ -654,11 +713,14 @@ router.get('/edit/:id', ensureAdmin, async (req, res) => {
       ],
       success_msg: req.flash('success_msg'),
       error_msg: req.flash('error_msg')
-    });
+    };
+    
+    console.log('✅ Edit form data prepared, rendering page...');
+    res.render('admin/product-edit', formData);
     
   } catch (error) {
-    console.error('Error loading product for edit:', error);
-    req.flash('error_msg', 'Error loading product');
+    console.error('❌ Error rendering edit page:', error);
+    req.flash('error_msg', 'Error loading edit form');
     res.redirect('/admin/products');
   }
 });
@@ -728,15 +790,312 @@ router.post('/edit/:id', ensureAdmin, upload.array('images', 10), async (req, re
   }
 });
 
-// Admin - Delete Product
-router.post('/delete/:id', ensureAdmin, async (req, res) => {
+
+
+
+
+// POST Update Product (Update करने का route)
+router.post('/products/update/:id', upload.array('newImages', 10), async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
-    req.flash('success_msg', 'Product deleted successfully!');
+    console.log('🚀 POST /admin/products/update/:id - Processing update...');
+    
+    // Admin authentication check
+    if (!req.session.user || req.session.user.role !== 'admin') {
+      req.flash('error_msg', 'Please login as admin first');
+      return res.redirect('/admin-login');
+    }
+    
+    const productId = req.params.id;
+    const Product = mongoose.model('Product');
+    
+    // Find existing product
+    const existingProduct = await Product.findById(productId);
+    if (!existingProduct) {
+      req.flash('error_msg', 'Product not found');
+      return res.redirect('/admin/products');
+    }
+    
+    // Log request data
+    console.log('📦 Request body keys:', Object.keys(req.body));
+    console.log('📸 New files uploaded:', req.files ? req.files.length : 0);
+    console.log('🔄 Keep images:', req.body.keepImages);
+    
+    // 1. VALIDATION
+    const { name, description, price, discountPrice, category, brand, featured } = req.body;
+    
+    const errors = [];
+    if (!name || name.trim() === '') errors.push('Product name is required');
+    if (!description || description.trim() === '') errors.push('Description is required');
+    if (!price || isNaN(price) || parseFloat(price) <= 0) errors.push('Valid price is required');
+    if (!category) errors.push('Category is required');
+    if (!brand) errors.push('Brand is required');
+    
+    if (errors.length > 0) {
+      req.flash('error_msg', errors.join(', '));
+      return res.redirect(`/admin/products/edit/${productId}`);
+    }
+    
+    // 2. PROCESS SIZES
+    const sizes = [];
+    
+    // Get sizes from checkboxes
+    if (req.body.sizes) {
+      let sizesArray = req.body.sizes;
+      // Convert to array if single value
+      if (!Array.isArray(sizesArray)) {
+        sizesArray = [sizesArray];
+      }
+      
+      sizesArray.forEach(sizeStr => {
+        const size = parseInt(sizeStr);
+        const quantityKey = `size_${size}_quantity`;
+        const quantity = parseInt(req.body[quantityKey]) || 0;
+        
+        if (quantity > 0) {
+          sizes.push({
+            size: size,
+            quantity: quantity
+          });
+        }
+      });
+    }
+    
+    // If no sizes from checkboxes, check individual fields
+    if (sizes.length === 0) {
+      for (let size = 6; size <= 12; size++) {
+        const quantityKey = `size_${size}_quantity`;
+        if (req.body[quantityKey] && parseInt(req.body[quantityKey]) > 0) {
+          sizes.push({
+            size: size,
+            quantity: parseInt(req.body[quantityKey])
+          });
+        }
+      }
+    }
+    
+    console.log('👟 Processed sizes:', sizes);
+    
+    // 3. PROCESS COLORS
+    const colors = [];
+    
+    if (req.body.colors) {
+      let colorsArray = req.body.colors;
+      // Convert to array if single value
+      if (!Array.isArray(colorsArray)) {
+        colorsArray = [colorsArray];
+      }
+      
+      // Filter out empty values
+      colorsArray = colorsArray.filter(color => color && color.trim() !== '');
+      
+      if (colorsArray.length > 0) {
+        colorsArray.forEach(colorName => {
+          const colorCodeKey = `color_${colorName}_code`;
+          const colorCode = req.body[colorCodeKey] || '#000000';
+          
+          // Find existing color images or start with empty array
+          let existingColorImages = [];
+          const existingColor = existingProduct.colors.find(c => c.name === colorName);
+          if (existingColor && existingColor.images) {
+            existingColorImages = existingColor.images;
+          }
+          
+          colors.push({
+            name: colorName,
+            code: colorCode,
+            images: existingColorImages // Start with existing images
+          });
+        });
+      }
+    }
+    
+    // 4. PROCESS EXISTING IMAGES (keep/delete logic)
+    const keepImages = req.body.keepImages;
+    const keepImagesArray = Array.isArray(keepImages) ? keepImages : (keepImages ? [keepImages] : []);
+    
+    console.log('📸 Images to keep:', keepImagesArray.length);
+    
+    // Filter out images that are not in keepImages (only keep checked ones)
+    colors.forEach(color => {
+      color.images = color.images.filter(img => 
+        keepImagesArray.includes(img.public_id)
+      );
+    });
+    
+    // 5. PROCESS NEW IMAGES (Cloudinary)
+    const newCloudinaryImages = [];
+    if (req.files && req.files.length > 0) {
+      newCloudinaryImages.push(...req.files.map(file => ({
+        url: file.path,
+        public_id: file.filename,
+        secure_url: file.path
+      })));
+    }
+    
+    console.log('🖼️ New Cloudinary images:', newCloudinaryImages.length);
+    
+    // 6. DISTRIBUTE NEW IMAGES AMONG COLORS
+    if (newCloudinaryImages.length > 0 && colors.length > 0) {
+      const imagesPerColor = Math.ceil(newCloudinaryImages.length / colors.length);
+      
+      colors.forEach((color, index) => {
+        const startIdx = index * imagesPerColor;
+        const endIdx = Math.min(startIdx + imagesPerColor, newCloudinaryImages.length);
+        const newImagesForColor = newCloudinaryImages.slice(startIdx, endIdx);
+        color.images = [...color.images, ...newImagesForColor];
+      });
+    }
+    
+    // If no colors selected, preserve existing colors
+    if (colors.length === 0 && existingProduct.colors.length > 0) {
+      // Filter existing colors based on keepImages
+      existingProduct.colors.forEach(color => {
+        color.images = color.images.filter(img => 
+          keepImagesArray.includes(img.public_id)
+        );
+      });
+      
+      colors.push(...existingProduct.colors.filter(color => color.images.length > 0));
+    }
+    
+    console.log('🎨 Colors with images:', colors.map(c => ({ name: c.name, images: c.images.length })));
+    
+    // 7. CALCULATE TOTAL STOCK
+    const totalStock = sizes.reduce((sum, size) => sum + size.quantity, 0);
+    
+    // 8. UPDATE PRODUCT OBJECT
+    const updateData = {
+      name: name.trim(),
+      description: description.trim(),
+      price: parseFloat(price),
+      discountPrice: discountPrice ? parseFloat(discountPrice) : undefined,
+      category: category,
+      brand: brand,
+      sizes: sizes,
+      colors: colors,
+      featured: featured === 'on',
+      updatedAt: new Date()
+    };
+    
+    console.log('💾 Product update data ready for save');
+    
+    // 9. UPDATE IN DATABASE
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    console.log('✅ Product updated successfully! ID:', updatedProduct._id);
+    
+    // 10. DELETE UNCHECKED IMAGES FROM CLOUDINARY
+    if (existingProduct.colors && existingProduct.colors.length > 0) {
+      const cloudinary = require('../config/cloudinary');
+      const deletePromises = [];
+      
+      existingProduct.colors.forEach(color => {
+        color.images.forEach(image => {
+          // Delete if image is not in keepImagesArray
+          if (image.public_id && !keepImagesArray.includes(image.public_id)) {
+            deletePromises.push(
+              cloudinary.uploader.destroy(image.public_id)
+                .then(result => {
+                  console.log(`🗑️ Deleted unchecked image: ${image.public_id}`);
+                })
+                .catch(err => {
+                  console.error(`❌ Failed to delete image: ${image.public_id}`, err);
+                })
+            );
+          }
+        });
+      });
+      
+      if (deletePromises.length > 0) {
+        await Promise.all(deletePromises);
+      }
+    }
+    
+    // 11. SUCCESS RESPONSE
+    req.flash('success_msg', `Product "${updatedProduct.name}" updated successfully!`);
     res.redirect('/admin/products');
+    
   } catch (error) {
-    console.error('Error deleting product:', error);
-    req.flash('error_msg', 'Error deleting product');
+    console.error('❌ ERROR in product update:', error);
+    console.error('Error details:', error.message);
+    
+    // Cleanup: Delete newly uploaded files from Cloudinary on error
+    if (req.files && req.files.length > 0) {
+      console.log('🧹 Cleaning up new uploaded images due to error');
+      const cloudinary = require('../config/cloudinary');
+      req.files.forEach(file => {
+        cloudinary.uploader.destroy(file.filename, (err, result) => {
+          if (err) console.error('Failed to delete from Cloudinary:', err);
+        });
+      });
+    }
+    
+    // Redirect back with error message
+    req.flash('error_msg', `Error updating product: ${error.message}`);
+    res.redirect(`/admin/products/edit/${req.params.id}`);
+  }
+});
+
+// Admin - Delete Product
+// DELETE Product
+router.post('/products/delete/:id', async (req, res) => {
+  try {
+    console.log('🗑️ POST /admin/products/delete/:id - Processing...');
+    
+    // Admin authentication check
+    if (!req.session.user || req.session.user.role !== 'admin') {
+      req.flash('error_msg', 'Please login as admin first');
+      return res.redirect('/admin-login');
+    }
+    
+    const productId = req.params.id;
+    const Product = mongoose.model('Product');
+    
+    // Find product first to get image data
+    const product = await Product.findById(productId);
+    
+    if (!product) {
+      req.flash('error_msg', 'Product not found');
+      return res.redirect('/admin/products');
+    }
+    
+    // Delete images from Cloudinary
+    const cloudinary = require('../config/cloudinary');
+    const deletePromises = [];
+    
+    if (product.colors && Array.isArray(product.colors)) {
+      product.colors.forEach(color => {
+        if (color.images && Array.isArray(color.images)) {
+          color.images.forEach(image => {
+            if (image && image.public_id) {
+              deletePromises.push(
+                cloudinary.uploader.destroy(image.public_id)
+                  .then(result => console.log(`Deleted image: ${image.public_id}`))
+                  .catch(err => console.error(`Failed to delete image: ${image.public_id}`, err))
+              );
+            }
+          });
+        }
+      });
+    }
+    
+    // Wait for all image deletions
+    await Promise.all(deletePromises);
+    
+    // Delete product from database
+    await Product.findByIdAndDelete(productId);
+    
+    console.log('✅ Product deleted successfully!');
+    req.flash('success_msg', `Product "${product.name}" deleted successfully!`);
+    res.redirect('/admin/products');
+    
+  } catch (error) {
+    console.error('❌ ERROR in product deletion:', error);
+    req.flash('error_msg', `Error deleting product: ${error.message}`);
     res.redirect('/admin/products');
   }
 });

@@ -13,18 +13,21 @@
     --transition: all 0.3s ease;
 }
 
+
 /* Reset & Base Styles */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+
 }
 
 body {
     font-family: 'Inter', sans-serif;
     color: var(--dark-color);
     line-height: 1.6;
-    padding-top: 76px; /* Fixed navbar height */
+    /* padding-top: 76px; Fixed navbar height */
+    margin-top: 0 !important;
 }
 
 /* Typography */

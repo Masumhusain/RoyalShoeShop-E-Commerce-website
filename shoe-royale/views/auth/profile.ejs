@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0a192f;
+            --secondary-color: #112240;
+            --accent-color: #64ffda;
+            --text-color: #e6f1ff;
+            --light-color: #a8b2d1;
+            --dark-color: #020c1b;
+            --gold-color: #ffd700;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+            /* border-radius: 0 0 20px 20px; */
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid var(--accent-color);
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: transform 0.3s;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .nav-pills .nav-link {
+            color: var(--primary-color);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+
+        .nav-pills .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-pills .nav-link:hover {
+            background: rgba(10, 25, 47, 0.1);
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 0.2rem rgba(100, 255, 218, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .badge-role {
+            background: var(--accent-color);
+            color: var(--dark-color);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            margin-bottom: 20px;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .order-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .password-strength {
+            height: 5px;
+            border-radius: 2px;
+            margin-top: 5px;
+            transition: all 0.3s;
+        }
+
+        .password-weak { background: var(--danger-color); width: 25%; }
+        .password-medium { background: #ffc107; width: 50%; }
+        .password-strong { background: var(--success-color); width: 100%; }
+
+        @media (max-width: 768px) {
+            .profile-avatar {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .profile-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark " style="background: var(--primary-color);">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/profile">
+                            <i class="fas fa-user me-1"></i> Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i> <%= success_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    <% } %>
+    
+    <% if (error_msg && error_msg.length > 0) { %>
+        <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i> <%= error_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    <img src="<%= user.avatar || '/images/default-avatar.png' %>" 
+                         alt="Profile" 
+                         class="profile-avatar">
+                </div>
+                <div class="col-md-10">
+                    <h1 class="display-5 fw-bold"><%= user.name %></h1>
+                    <p class="lead mb-2">
+                        <i class="fas fa-envelope me-2"></i><%= user.email %>
+                        <span class="badge-role ms-3"><%= user.role %></span>
+                    </p>
+                    <p class="mb-0">
+                        <small>
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            Member since: <%= new Date(user.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                            }) %>
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <div class="col-lg-3 mb-4">
+                <div class="profile-card">
+                    <h5 class="fw-bold mb-4">Account Settings</h5>
+                    <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#profile">
+                            <i class="fas fa-user-circle me-2"></i> Profile
+                        </button>
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#security">
+                            <i class="fas fa-shield-alt me-2"></i> Security
+                        </button>
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#orders">
+                            <i class="fas fa-shopping-bag me-2"></i> Orders
+                        </button>
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#address">
+                            <i class="fas fa-map-marker-alt me-2"></i> Address
+                        </button>
+                        <hr>
+                        <a href="/" class="nav-link">
+                            <i class="fas fa-home me-2"></i> Back to Home
+                        </a>
+                        <a href="/products" class="nav-link">
+                            <i class="fas fa-shopping-bag me-2"></i> Shop Now
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="profile-card">
+                    <h5 class="fw-bold mb-4">Account Stats</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-number">0</div>
+                                <div class="stat-label">Orders</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-number">0</div>
+                                <div class="stat-label">Wishlist</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-number">0</div>
+                                <div class="stat-label">Reviews</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card">
+                                <div class="stat-number">0</div>
+                                <div class="stat-label">Coupons</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-lg-9">
+                <div class="tab-content" id="v-pills-tabContent">
+                    
+                    <!-- Profile Tab -->
+                    <div class="tab-pane fade show active" id="profile">
+                        <div class="profile-card">
+                            <h3 class="fw-bold mb-4">
+                                <i class="fas fa-user-circle me-2"></i>Personal Information
+                            </h3>
+                            
+                            <form action="/profile/update" method="POST">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Full Name</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="name" 
+                                               value="<%= user.name %>"
+                                               required>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Email Address</label>
+                                        <input type="email" 
+                                               class="form-control" 
+                                               value="<%= user.email %>"
+                                               disabled>
+                                        <small class="text-muted">Email cannot be changed</small>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Phone Number</label>
+                                        <input type="tel" 
+                                               class="form-control" 
+                                               name="phone" 
+                                               value="<%= user.address?.phone || '' %>"
+                                               placeholder="Enter phone number">
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Account Role</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               value="<%= user.role.charAt(0).toUpperCase() + user.role.slice(1) %>"
+                                               disabled>
+                                    </div>
+                                    
+                                    <div class="col-12 mb-4">
+                                        <label class="form-label fw-bold">Avatar URL</label>
+                                        <div class="input-group">
+                                            <input type="url" 
+                                                   class="form-control" 
+                                                   name="avatar" 
+                                                   value="<%= user.avatar || '' %>"
+                                                   placeholder="https://example.com/avatar.jpg">
+                                            <button class="btn btn-outline-secondary" type="button" id="previewAvatar">
+                                                <i class="fas fa-eye"></i> Preview
+                                            </button>
+                                        </div>
+                                        <div id="avatarPreview" class="mt-2 text-center" style="display: none;">
+                                            <img src="" alt="Avatar Preview" style="max-width: 100px; border-radius: 10px;">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" 
+                                                   type="checkbox" 
+                                                   name="newsletter"
+                                                   id="newsletter"
+                                                   <%= user.newsletterSubscription ? 'checked' : '' %>>
+                                            <label class="form-check-label" for="newsletter">
+                                                Subscribe to newsletter for exclusive offers
+                                            </label>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Update Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Security Tab -->
+                    <div class="tab-pane fade" id="security">
+                        <div class="profile-card">
+                            <h3 class="fw-bold mb-4">
+                                <i class="fas fa-shield-alt me-2"></i>Security Settings
+                            </h3>
+                            
+                            <form action="/profile/change-password" method="POST" id="changePasswordForm">
+                                <div class="mb-4">
+                                    <h5 class="fw-bold mb-3">Change Password</h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Current Password</label>
+                                            <div class="input-group">
+                                                <input type="password" 
+                                                       class="form-control" 
+                                                       name="currentPassword" 
+                                                       id="currentPassword"
+                                                       required>
+                                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">New Password</label>
+                                            <div class="input-group">
+                                                <input type="password" 
+                                                       class="form-control" 
+                                                       name="newPassword" 
+                                                       id="newPassword"
+                                                       minlength="6"
+                                                       required>
+                                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="password-strength mt-2" id="passwordStrength"></div>
+                                            <small class="text-muted" id="passwordHint"></small>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Confirm New Password</label>
+                                            <div class="input-group">
+                                                <input type="password" 
+                                                       class="form-control" 
+                                                       name="confirmPassword" 
+                                                       id="confirmPassword"
+                                                       required>
+                                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </div>
+                                            <div class="invalid-feedback" id="confirmPasswordError" style="display: none;">
+                                                Passwords do not match
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-key me-2"></i>Change Password
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <hr>
+                            
+                            <div class="mt-4">
+                                <h5 class="fw-bold mb-3">Account Security</h5>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
+                                    <div>
+                                        <h6 class="mb-1">Two-Factor Authentication</h6>
+                                        <p class="text-muted mb-0">Add an extra layer of security to your account</p>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twoFactorSwitch">
+                                        <label class="form-check-label" for="twoFactorSwitch"></label>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                                    <div>
+                                        <h6 class="mb-1">Login Activity</h6>
+                                        <p class="text-muted mb-0">
+                                            Last login: 
+                                            <% if (user.lastLogin) { %>
+                                                <%= new Date(user.lastLogin).toLocaleString() %>
+                                            <% } else { %>
+                                                Never
+                                            <% } %>
+                                        </p>
+                                    </div>
+                                    <a href="#" class="btn btn-outline-primary btn-sm">View All</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Orders Tab -->
+                    <div class="tab-pane fade" id="orders">
+                        <div class="profile-card">
+                            <h3 class="fw-bold mb-4">
+                                <i class="fas fa-shopping-bag me-2"></i>Order History
+                            </h3>
+                            
+                            <% if (orders && orders.length > 0) { %>
+                                <div class="order-history">
+                                    <% orders.forEach(order => { %>
+                                        <div class="order-item">
+                                            <div class="row align-items-center">
+                                                <div class="col-md-3">
+                                                    <strong>Order #<%= order.orderNumber %></strong>
+                                                    <p class="text-muted mb-0 small">
+                                                        <%= new Date(order.createdAt).toLocaleDateString() %>
+                                                    </p>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <span class="badge bg-<%= 
+                                                        order.status === 'delivered' ? 'success' : 
+                                                        order.status === 'pending' ? 'warning' : 
+                                                        order.status === 'cancelled' ? 'danger' : 'primary'
+                                                    %>">
+                                                        <%= order.status %>
+                                                    </span>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    ₹<%= order.totalAmount.toFixed(2) %>
+                                                </div>
+                                                <div class="col-md-3 text-end">
+                                                    <a href="/orders/<%= order._id %>" class="btn btn-outline-primary btn-sm">
+                                                        View Details
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            <% } else { %>
+                                <div class="text-center py-5">
+                                    <i class="fas fa-shopping-bag fa-4x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No orders yet</h5>
+                                    <p class="text-muted">Start shopping to see your orders here</p>
+                                    <a href="/products" class="btn btn-primary">
+                                        <i class="fas fa-shopping-cart me-2"></i>Shop Now
+                                    </a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Address Tab -->
+                    <div class="tab-pane fade" id="address">
+                        <div class="profile-card">
+                            <h3 class="fw-bold mb-4">
+                                <i class="fas fa-map-marker-alt me-2"></i>Shipping Address
+                            </h3>
+                            
+                            <form action="/profile/update-address" method="POST">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label fw-bold">Street Address</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="street" 
+                                               value="<%= user.address?.street || '' %>"
+                                               placeholder="Enter street address">
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">City</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="city" 
+                                               value="<%= user.address?.city || '' %>"
+                                               placeholder="Enter city">
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">State</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="state" 
+                                               value="<%= user.address?.state || '' %>"
+                                               placeholder="Enter state">
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Country</label>
+                                        <select class="form-select" name="country">
+                                            <option value="">Select Country</option>
+                                            <option value="India" <%= user.address?.country === 'India' ? 'selected' : '' %>>India</option>
+                                            <option value="USA" <%= user.address?.country === 'USA' ? 'selected' : '' %>>USA</option>
+                                            <option value="UK" <%= user.address?.country === 'UK' ? 'selected' : '' %>>UK</option>
+                                            <option value="Canada" <%= user.address?.country === 'Canada' ? 'selected' : '' %>>Canada</option>
+                                            <option value="Australia" <%= user.address?.country === 'Australia' ? 'selected' : '' %>>Australia</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">ZIP Code</label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="zipCode" 
+                                               value="<%= user.address?.zipCode || '' %>"
+                                               placeholder="Enter ZIP code">
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-2"></i>Save Address
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>Royal Footwear</h5>
+                    <p class="text-muted">Premium footwear for every occasion</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white text-decoration-none">Home</a></li>
+                        <li><a href="/products" class="text-white text-decoration-none">Products</a></li>
+                        <li><a href="/about" class="text-white text-decoration-none">About Us</a></li>
+                        <li><a href="/contact" class="text-white text-decoration-none">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5>Connect With Us</h5>
+                    <div class="social-icons">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook fa-lg"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-linkedin fa-lg"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2024 Royal Footwear. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(button => {
+            button.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            });
+        });
+
+        // Password strength indicator
+        const newPasswordInput = document.getElementById('newPassword');
+        const passwordStrength = document.getElementById('passwordStrength');
+        const passwordHint = document.getElementById('passwordHint');
+        
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', function() {
+                const password = this.value;
+                let strength = 0;
+                
+                // Length check
+                if (password.length >= 8) strength += 25;
+                if (password.length >= 12) strength += 10;
+                
+                // Character variety checks
+                if (/[a-z]/.test(password)) strength += 15;
+                if (/[A-Z]/.test(password)) strength += 15;
+                if (/[0-9]/.test(password)) strength += 15;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+                
+                // Update progress bar
+                passwordStrength.className = 'password-strength';
+                
+                if (strength < 30) {
+                    passwordStrength.classList.add('password-weak');
+                    passwordHint.textContent = 'Weak password';
+                    passwordHint.className = 'text-danger';
+                } else if (strength < 70) {
+                    passwordStrength.classList.add('password-medium');
+                    passwordHint.textContent = 'Moderate password';
+                    passwordHint.className = 'text-warning';
+                } else {
+                    passwordStrength.classList.add('password-strong');
+                    passwordHint.textContent = 'Strong password';
+                    passwordHint.className = 'text-success';
+                }
+            });
+        }
+
+        // Confirm password validation
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+        
+        if (confirmPasswordInput) {
+            confirmPasswordInput.addEventListener('input', function() {
+                const newPassword = document.getElementById('newPassword').value;
+                
+                if (this.value && newPassword !== this.value) {
+                    this.classList.add('is-invalid');
+                    confirmPasswordError.style.display = 'block';
+                } else {
+                    this.classList.remove('is-invalid');
+                    confirmPasswordError.style.display = 'none';
+                }
+            });
+        }
+
+        // Avatar preview
+        const previewAvatarBtn = document.getElementById('previewAvatar');
+        if (previewAvatarBtn) {
+            previewAvatarBtn.addEventListener('click', function() {
+                const avatarInput = this.parentElement.querySelector('input');
+                const avatarPreview = document.getElementById('avatarPreview');
+                const avatarImg = avatarPreview.querySelector('img');
+                
+                if (avatarInput.value) {
+                    avatarImg.src = avatarInput.value;
+                    avatarPreview.style.display = 'block';
+                } else {
+                    alert('Please enter an avatar URL first');
+                }
+            });
+        }
+
+        // Form validation
+        const changePasswordForm = document.getElementById('changePasswordForm');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', function(e) {
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (newPassword !== confirmPassword) {
+                    e.preventDefault();
+                    document.getElementById('confirmPassword').classList.add('is-invalid');
+                    confirmPasswordError.style.display = 'block';
+                    alert('Passwords do not match!');
+                }
+                
+                if (newPassword.length < 6) {
+                    e.preventDefault();
+                    alert('Password must be at least 6 characters long!');
+                }
+            });
+        }
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+</body>
+</html>

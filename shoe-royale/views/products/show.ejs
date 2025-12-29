@@ -1,975 +1,931 @@
-<div class="container py-5">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item"><a href="/products">Products</a></li>
-            <li class="breadcrumb-item"><a href="/products?category=<%= product.category %>">
-                <%= product.category.charAt(0).toUpperCase() + product.category.slice(1) %>
-            </a></li>
-            <li class="breadcrumb-item active" aria-current="page"><%= product.name %></li>
-        </ol>
-    </nav>
-    
-    <!-- Product Detail -->
-    <div class="row g-5">
-        <!-- Product Images -->
-        <div class="col-lg-6">
-            <div class="royal-border">
-                <div class="royal-border-inner">
-                    <!-- Main Image -->
-                    <div class="text-center mb-4">
-                        <img id="product-main-image" 
-                             src="<%= product.colors && product.colors.length > 0 && product.colors[0].images && product.colors[0].images.length > 0 
-                                 ? product.colors[0].images[0] 
-                                 : '/images/default-shoe.jpg' %>" 
-                             alt="<%= product.name %>" 
-                             class="img-fluid rounded"
-                             style="max-height: 400px; object-fit: contain;">
-                    </div>
-                    
-                    <!-- Thumbnail Images -->
-                    <% if (product.colors && product.colors.length > 0) { %>
-                        <div class="row g-2">
-                            <% product.colors.forEach((color, colorIndex) => { %>
-                                <% color.images.forEach((image, imgIndex) => { %>
-                                    <% if (imgIndex < 4) { %>
-                                        <div class="col-3">
-                                            <img src="<%= image %>" 
-                                                 alt="<%= product.name %> - <%= color.name %>"
-                                                 class="img-fluid rounded thumbnail cursor-pointer"
-                                                 style="height: 80px; object-fit: cover;"
-                                                 onclick="changeMainImage('<%= image %>')"
-                                                 onmouseover="changeMainImage('<%= image %>')">
-                                        </div>
-                                    <% } %>
-                                <% }); %>
-                            <% }); %>
-                        </div>
-                    <% } %>
-                </div>
-            </div>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %> - Royal Footwear</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --accent-color: #ffd700;
+            --light-bg: #f5f7fb;
+            --border-radius: 10px;
+        }
         
-        <!-- Product Details -->
-        <div class="col-lg-6">
-            <div class="product-details">
-                <!-- Product Header -->
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <h1 class="product-title mb-2"><%= product.name %></h1>
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="badge bg-dark me-2"><%= product.brand %></span>
-                            <span class="badge bg-secondary text-capitalize"><%= product.category %></span>
-                            <% if (product.featured) { %>
-                                <span class="badge bg-warning ms-2">
-                                    <i class="fas fa-crown me-1"></i>Featured
-                                </span>
-                            <% } %>
-                        </div>
-                    </div>
-                    <div>
-                        <!-- Wishlist Button -->
-                        <button class="btn btn-outline-danger btn-sm" title="Add to Wishlist">
-                            <i class="far fa-heart"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Rating -->
-                <div class="product-rating mb-4">
-                    <div class="d-flex align-items-center">
-                        <% const rating = product.rating || 0; %>
-                        <div class="me-3">
-                            <% for(let i = 1; i <= 5; i++) { %>
-                                <% if (i <= Math.floor(rating)) { %>
-                                    <i class="fas fa-star text-warning"></i>
-                                <% } else if (i === Math.ceil(rating) && rating % 1 !== 0) { %>
-                                    <i class="fas fa-star-half-alt text-warning"></i>
-                                <% } else { %>
-                                    <i class="far fa-star text-warning"></i>
-                                <% } %>
-                            <% } %>
-                            <span class="ms-2"><strong><%= rating.toFixed(1) %></strong> (<%= product.reviewsCount || 0 %> reviews)</span>
-                        </div>
-                        <a href="#reviews" class="text-decoration-none text-muted small">Write a review</a>
-                    </div>
-                </div>
-                
-                <!-- Price -->
-                <div class="product-price mb-4">
-                    <% if (product.discountPrice && product.discountPrice < product.price) { %>
-                        <div class="d-flex align-items-center">
-                            <h2 class="text-danger fw-bold mb-0">$<%= product.discountPrice.toFixed(2) %></h2>
-                            <h4 class="text-muted text-decoration-line-through ms-3">$<%= product.price.toFixed(2) %></h4>
-                            <span class="badge bg-danger ms-3">
-                                Save $<%= (product.price - product.discountPrice).toFixed(2) %>
-                            </span>
-                        </div>
-                    <% } else { %>
-                        <h2 class="fw-bold">$<%= product.price.toFixed(2) %></h2>
-                    <% } %>
-                </div>
-                
-                <!-- Description -->
-                <div class="product-description mb-5">
-                    <h5 class="mb-3">Description</h5>
-                    <p class="text-muted"><%= product.description %></p>
-                </div>
-                
-                <!-- Color Selection -->
-                <div class="mb-4">
-                    <h6 class="mb-3">Color: <span id="selected-color" class="fw-bold">
-                        <%= product.colors && product.colors.length > 0 ? product.colors[0].name : 'N/A' %>
-                    </span></h6>
-                    <div class="d-flex flex-wrap gap-2">
-                        <% if (product.colors && product.colors.length > 0) { %>
-                            <% product.colors.forEach((color, index) => { %>
-                                <div class="color-option <%= index === 0 ? 'active' : '' %>"
-                                     style="background-color: <%= color.code || '#000000' %>;"
-                                     data-color="<%= color.name %>"
-                                     data-image="<%= color.images && color.images.length > 0 ? color.images[0] : '/images/default-shoe.jpg' %>"
-                                     title="<%= color.name %>"
-                                     onclick="selectColor(this)">
-                                </div>
-                            <% }); %>
-                        <% } else { %>
-                            <p class="text-muted">No colors available</p>
-                        <% } %>
-                    </div>
-                </div>
-                
-                <!-- Size Selection -->
-                <div class="mb-4">
-                    <h6 class="mb-3">Size: <span id="selected-size-display" class="fw-bold">
-                        <% if (product.sizes && product.sizes.length > 0) { 
-                            const firstAvailable = product.sizes.find(s => s.quantity > 0);
-                        %>
-                            <%= firstAvailable ? 'US ' + firstAvailable.size : 'Select Size' %>
-                        <% } else { %>
-                            N/A
-                        <% } %>
-                    </span></h6>
-                    <div class="d-flex flex-wrap gap-2">
-                        <% if (product.sizes && product.sizes.length > 0) { %>
-                            <% product.sizes.forEach((sizeObj, index) => { %>
-                                <div class="size-option <%= index === 0 && sizeObj.quantity > 0 ? 'active' : '' %> <%= sizeObj.quantity === 0 ? 'disabled' : '' %>"
-                                     data-size="<%= sizeObj.size %>"
-                                     title="<%= sizeObj.quantity === 0 ? 'Out of stock' : sizeObj.quantity + ' available' %>"
-                                     onclick="<%= sizeObj.quantity > 0 ? 'selectSize(this)' : '' %>">
-                                    <%= sizeObj.size %>
-                                    <% if (sizeObj.quantity === 0) { %>
-                                        <small class="d-block text-danger">Out</small>
-                                    <% } %>
-                                </div>
-                            <% }); %>
-                        <% } else { %>
-                            <p class="text-muted">No sizes available</p>
-                        <% } %>
-                    </div>
-                    <input type="hidden" id="selected-size" name="size" 
-                           value="<%= product.sizes && product.sizes.length > 0 && product.sizes[0].quantity > 0 ? product.sizes[0].size : '' %>">
-                    <input type="hidden" id="selected-color-input" name="color" 
-                           value="<%= product.colors && product.colors.length > 0 ? product.colors[0].name : '' %>">
-                </div>
-                
-                <!-- Quantity -->
-                <div class="mb-4">
-                    <h6 class="mb-3">Quantity</h6>
-                    <div class="d-flex align-items-center" style="width: 150px;">
-                        <button class="btn btn-outline-dark quantity-btn" onclick="changeQuantity(-1)">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <input type="number" class="form-control text-center quantity-input" 
-                               value="1" min="1" max="10" id="product-quantity" readonly>
-                        <button class="btn btn-outline-dark quantity-btn" onclick="changeQuantity(1)">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                    <small class="text-muted mt-2 d-block">
-                        <% if (product.sizes && product.sizes.length > 0) { 
-                            const totalStock = product.sizes.reduce((sum, size) => sum + size.quantity, 0);
-                        %>
-                            <%= totalStock > 0 ? totalStock + ' items available' : 'Out of stock' %>
-                        <% } %>
-                    </small>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="d-grid gap-3 mb-5">
-                    <% if (product.sizes && product.sizes.length > 0 && product.sizes.some(s => s.quantity > 0)) { %>
-                        <button class="btn btn-gold btn-lg py-3" onclick="addToCartProduct()">
-                            <i class="fas fa-shopping-cart me-2"></i>Add to Cart
-                        </button>
-                    <% } else { %>
-                        <button class="btn btn-secondary btn-lg py-3" disabled>
-                            <i class="fas fa-times-circle me-2"></i>Out of Stock
-                        </button>
-                    <% } %>
-                    
-                    <button class="btn btn-outline-dark btn-lg py-3">
-                        <i class="far fa-heart me-2"></i>Add to Wishlist
-                    </button>
-                </div>
-                
-                <!-- Product Features -->
-                <div class="mb-5">
-                    <h5 class="mb-3">Product Features</h5>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <div class="feature-icon royal-icon me-3">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <span>Premium Quality Materials</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <div class="feature-icon royal-icon me-3">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <span>Comfortable Fit Guaranteed</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <div class="feature-icon royal-icon me-3">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <span>Durable Construction</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center">
-                                <div class="feature-icon royal-icon me-3">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <span>Royal Warranty Included</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Share Product -->
-                <div class="border-top pt-4">
-                    <h6 class="mb-3">Share this product</h6>
-                    <div class="d-flex gap-2">
-                        <a href="#" class="btn btn-outline-primary btn-sm">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-info btn-sm">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-danger btn-sm">
-                            <i class="fab fa-pinterest"></i>
-                        </a>
-                        <a href="#" class="btn btn-outline-success btn-sm">
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Product Tabs -->
-    <div class="mt-5 pt-5 border-top">
-        <ul class="nav nav-tabs" id="productTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button">
-                    Description
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button">
-                    Specifications
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
-                    Reviews (<%= product.reviewsCount || 0 %>)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button">
-                    Shipping & Returns
-                </button>
-            </li>
-        </ul>
+        body { background: var(--light-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        <div class="tab-content p-4 border border-top-0 rounded-bottom" id="productTabsContent">
-            <!-- Description Tab -->
-            <div class="tab-pane fade show active" id="description" role="tabpanel">
-                <p><%= product.description %></p>
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <h6>Materials</h6>
-                        <ul class="text-muted">
-                            <li>Premium leather upper</li>
-                            <li>Breathable mesh lining</li>
-                            <li>Memory foam insole</li>
-                            <li>Rubber outsole for grip</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Care Instructions</h6>
-                        <ul class="text-muted">
-                            <li>Wipe clean with damp cloth</li>
-                            <li>Air dry naturally</li>
-                            <li>Do not machine wash</li>
-                            <li>Store in cool, dry place</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Specifications Tab -->
-            <div class="tab-pane fade" id="specifications" role="tabpanel">
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <th scope="row" style="width: 30%;">Brand</th>
-                            <td><%= product.brand %></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Category</th>
-                            <td class="text-capitalize"><%= product.category %></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Available Sizes</th>
-                            <td>
-                                <% if (product.sizes && product.sizes.length > 0) { %>
-                                    <% product.sizes.forEach((size, index) => { %>
-                                        US <%= size.size %><%= size.quantity > 0 ? ' (In stock)' : ' (Out of stock)' %>
-                                        <%= index < product.sizes.length - 1 ? ', ' : '' %>
-                                    <% }); %>
-                                <% } else { %>
-                                    Not specified
-                                <% } %>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Available Colors</th>
-                            <td>
-                                <% if (product.colors && product.colors.length > 0) { %>
-                                    <% product.colors.forEach((color, index) => { %>
-                                        <%= color.name %><%= index < product.colors.length - 1 ? ', ' : '' %>
-                                    <% }); %>
-                                <% } else { %>
-                                    Not specified
-                                <% } %>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Weight</th>
-                            <td>Approximately 0.8 kg per pair</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Warranty</th>
-                            <td>1 year manufacturer warranty</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Reviews Tab -->
-            <div class="tab-pane fade" id="reviews" role="tabpanel">
-                <div class="row">
-                    <div class="col-lg-4">
+        .royal-border {
+            border: 2px solid var(--accent-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background: white;
+        }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #ffed4e 100%);
+            color: var(--primary-dark);
+            border: none;
+            font-weight: 700;
+            padding: 12px 30px;
+            border-radius: 8px;
+        }
+        
+        .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3); }
+        
+        .royal-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-dark);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="/products">Products</a></li>
+                <li class="breadcrumb-item"><a href="/products?category=<%= product.category %>">
+                    <%= product.category.charAt(0).toUpperCase() + product.category.slice(1) %>
+                </a></li>
+                <li class="breadcrumb-item active" aria-current="page"><%= product.name %></li>
+            </ol>
+        </nav>
+        
+        <!-- Product Detail -->
+        <div class="row g-5">
+            <!-- Product Images -->
+            <div class="col-lg-6">
+                <div class="royal-border">
+                    <div class="royal-border-inner">
+                        <!-- Main Image -->
                         <div class="text-center mb-4">
-                            <h2 class="text-gold"><%= product.rating ? product.rating.toFixed(1) : '0.0' %></h2>
-                            <div class="mb-2">
-                                <% for(let i = 1; i <= 5; i++) { %>
-                                    <% if (i <= Math.floor(rating)) { %>
-                                        <i class="fas fa-star text-warning fa-lg"></i>
-                                    <% } else if (i === Math.ceil(rating) && rating % 1 !== 0) { %>
-                                        <i class="fas fa-star-half-alt text-warning fa-lg"></i>
-                                    <% } else { %>
-                                        <i class="far fa-star text-warning fa-lg"></i>
-                                    <% } %>
-                                <% } %>
-                            </div>
-                            <p class="text-muted">Based on <%= product.reviewsCount || 0 %> reviews</p>
+                            <img id="product-main-image" 
+                                 src="<%= product.colors && product.colors.length > 0 && product.colors[0].images && product.colors[0].images.length > 0 
+                                     ? product.colors[0].images[0].url 
+                                     : '/images/default-shoe.jpg' %>" 
+                                 alt="<%= product.name %>" 
+                                 class="img-fluid rounded"
+                                 style="max-height: 400px; object-fit: contain;">
                         </div>
                         
-                        <% if (user) { %>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h6>Write a Review</h6>
-                                    <form id="reviewForm">
-                                        <div class="mb-3">
-                                            <label class="form-label">Rating</label>
-                                            <div class="rating-stars">
-                                                <% for(let i = 5; i >= 1; i--) { %>
-                                                    <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>">
-                                                    <label for="star<%= i %>" class="star-label">★</label>
-                                                <% } %>
+                        <!-- Thumbnail Images -->
+                        <% if (product.colors && product.colors.length > 0) { %>
+                            <div class="row g-2">
+                                <% product.colors.forEach((color, colorIndex) => { %>
+                                    <% color.images.forEach((image, imgIndex) => { %>
+                                        <% if (imgIndex < 4) { %>
+                                            <div class="col-3">
+                                                <img src="<%= image.url %>" 
+                                                     alt="<%= product.name %> - <%= color.name %>"
+                                                     class="img-fluid rounded thumbnail cursor-pointer"
+                                                     style="height: 80px; object-fit: cover;"
+                                                     onclick="changeMainImage('<%= image.url %>')"
+                                                     onmouseover="changeMainImage('<%= image.url %>')">
                                             </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Review Title</label>
-                                            <input type="text" class="form-control" name="title">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Your Review</label>
-                                            <textarea class="form-control" name="comment" rows="3"></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-gold w-100">Submit Review</button>
-                                    </form>
-                                </div>
-                            </div>
-                        <% } else { %>
-                            <div class="alert alert-info">
-                                <p class="mb-0">Please <a href="/login" class="alert-link">login</a> to write a review.</p>
+                                        <% } %>
+                                    <% }); %>
+                                <% }); %>
                             </div>
                         <% } %>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Product Details -->
+            <div class="col-lg-6">
+                <div class="product-details">
+                    <!-- Product Header -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="product-title mb-2"><%= product.name %></h1>
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="badge bg-dark me-2"><%= product.brand %></span>
+                                <span class="badge bg-secondary text-capitalize"><%= product.category %></span>
+                                <% if (product.featured) { %>
+                                    <span class="badge bg-warning ms-2">
+                                        <i class="fas fa-crown me-1"></i>Featured
+                                    </span>
+                                <% } %>
+                            </div>
+                        </div>
+                        <div>
+                            <!-- Wishlist Button -->
+                            <button class="btn btn-outline-danger btn-sm" title="Add to Wishlist">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
                     
-                    <div class="col-lg-8">
-                        <!-- Sample Reviews -->
-                        <div class="review-list">
-                            <div class="review-item border-bottom pb-4 mb-4">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <div>
-                                        <strong>John Doe</strong>
-                                        <div class="text-warning">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">2 days ago</small>
-                                </div>
-                                <h6>Excellent Quality!</h6>
-                                <p>These shoes are amazing! Perfect fit and very comfortable. The quality is outstanding.</p>
+                    <!-- Rating -->
+                    <div class="product-rating mb-4">
+                        <div class="d-flex align-items-center">
+                            <% const rating = product.rating || 0; %>
+                            <div class="me-3">
+                                <% for(let i = 1; i <= 5; i++) { %>
+                                    <% if (i <= Math.floor(rating)) { %>
+                                        <i class="fas fa-star text-warning"></i>
+                                    <% } else if (i === Math.ceil(rating) && rating % 1 !== 0) { %>
+                                        <i class="fas fa-star-half-alt text-warning"></i>
+                                    <% } else { %>
+                                        <i class="far fa-star text-warning"></i>
+                                    <% } %>
+                                <% } %>
+                                <span class="ms-2"><strong><%= rating.toFixed(1) %></strong> (<%= product.reviewsCount || 0 %> reviews)</span>
                             </div>
-                            
-                            <div class="review-item border-bottom pb-4 mb-4">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <div>
-                                        <strong>Sarah Smith</strong>
-                                        <div class="text-warning">
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="fas fa-star"></i>
-                                            <i class="far fa-star"></i>
-                                        </div>
-                                    </div>
-                                    <small class="text-muted">1 week ago</small>
-                                </div>
-                                <h6>Great but runs small</h6>
-                                <p>Beautiful shoes but I recommend going half size up. Otherwise perfect!</p>
+                            <a href="#reviews" class="text-decoration-none text-muted small">Write a review</a>
+                        </div>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="product-price mb-4">
+                        <% if (product.discountPrice && product.discountPrice < product.price) { %>
+                            <div class="d-flex align-items-center">
+                                <h2 class="text-danger fw-bold mb-0">₹<%= product.discountPrice.toFixed(2) %></h2>
+                                <h4 class="text-muted text-decoration-line-through ms-3">₹<%= product.price.toFixed(2) %></h4>
+                                <span class="badge bg-danger ms-3">
+                                    Save ₹<%= (product.price - product.discountPrice).toFixed(2) %>
+                                </span>
                             </div>
-                            
-                            <% if (product.reviewsCount === 0) { %>
-                                <div class="text-center py-4">
-                                    <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
-                                    <h5>No reviews yet</h5>
-                                    <p class="text-muted">Be the first to review this product!</p>
-                                </div>
+                        <% } else { %>
+                            <h2 class="fw-bold">₹<%= product.price.toFixed(2) %></h2>
+                        <% } %>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="product-description mb-5">
+                        <h5 class="mb-3">Description</h5>
+                        <p class="text-muted"><%= product.description %></p>
+                    </div>
+                    
+                    <!-- Color Selection -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Color: <span id="selected-color" class="fw-bold">
+                            <%= product.colors && product.colors.length > 0 ? product.colors[0].name : 'N/A' %>
+                        </span></h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% if (product.colors && product.colors.length > 0) { %>
+                                <% product.colors.forEach((color, index) => { %>
+                                    <div class="color-option <%= index === 0 ? 'active' : '' %>"
+                                         style="background-color: <%= color.code || '#000000' %>;"
+                                         data-color="<%= color.name %>"
+                                         data-image="<%= color.images && color.images.length > 0 ? color.images[0].url : '/images/default-shoe.jpg' %>"
+                                         title="<%= color.name %>"
+                                         onclick="selectColor(this)">
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <p class="text-muted">No colors available</p>
                             <% } %>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Shipping Tab -->
-            <div class="tab-pane fade" id="shipping" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Shipping Information</h6>
-                        <ul class="text-muted">
-                            <li>Free shipping on orders over $100</li>
-                            <li>Standard shipping: 3-5 business days</li>
-                            <li>Express shipping: 1-2 business days</li>
-                            <li>International shipping available</li>
-                            <li>Tracking number provided for all orders</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Return Policy</h6>
-                        <ul class="text-muted">
-                            <li>30-day return policy</li>
-                            <li>Items must be unworn and in original packaging</li>
-                            <li>Free returns for defective items</li>
-                            <li>Refund processed within 5-7 business days</li>
-                            <li>Contact support for return authorization</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Related Products -->
-    <% if (relatedProducts && relatedProducts.length > 0) { %>
-        <div class="mt-5 pt-5 border-top">
-            <h3 class="mb-4">You May Also Like</h3>
-            <div class="row g-4">
-                <% relatedProducts.forEach(related => { %>
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="product-card luxury-card h-100">
-                            <div class="product-image position-relative">
-                                <a href="/products/<%= related._id %>">
-                                    <img src="<%= related.colors && related.colors.length > 0 && related.colors[0].images && related.colors[0].images.length > 0 
-                                        ? related.colors[0].images[0] 
-                                        : '/images/default-shoe.jpg' %>" 
-                                         alt="<%= related.name %>" 
-                                         class="img-fluid"
-                                         style="height: 150px; width: 100%; object-fit: contain; padding: 10px;">
-                                </a>
-                            </div>
-                            <div class="product-content p-3">
-                                <h6 class="product-title mb-1">
-                                    <a href="/products/<%= related._id %>" class="text-decoration-none text-dark">
-                                        <%= related.name %>
-                                    </a>
-                                </h6>
-                                <p class="product-brand text-muted small mb-2"><%= related.brand %></p>
-                                
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="product-price">
-                                        <% if (related.discountPrice && related.discountPrice < related.price) { %>
-                                            <span class="text-danger fw-bold">$<%= related.discountPrice.toFixed(2) %></span>
-                                            <span class="text-muted text-decoration-line-through ms-2">$<%= related.price.toFixed(2) %></span>
-                                        <% } else { %>
-                                            <span class="fw-bold">$<%= related.price.toFixed(2) %></span>
+                    
+                    <!-- Size Selection -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Size: <span id="selected-size-display" class="fw-bold">
+                            <% if (product.sizes && product.sizes.length > 0) { 
+                                const firstAvailable = product.sizes.find(s => s.quantity > 0);
+                            %>
+                                <%= firstAvailable ? 'US ' + firstAvailable.size : 'Select Size' %>
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </span></h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% if (product.sizes && product.sizes.length > 0) { %>
+                                <% product.sizes.forEach((sizeObj, index) => { %>
+                                    <div class="size-option <%= index === 0 && sizeObj.quantity > 0 ? 'active' : '' %> <%= sizeObj.quantity === 0 ? 'disabled' : '' %>"
+                                         data-size="<%= sizeObj.size %>"
+                                         title="<%= sizeObj.quantity === 0 ? 'Out of stock' : sizeObj.quantity + ' available' %>"
+                                         onclick="<%= sizeObj.quantity > 0 ? 'selectSize(this)' : '' %>">
+                                        <%= sizeObj.size %>
+                                        <% if (sizeObj.quantity === 0) { %>
+                                            <small class="d-block text-danger">Out</small>
                                         <% } %>
                                     </div>
+                                <% }); %>
+                            <% } else { %>
+                                <p class="text-muted">No sizes available</p>
+                            <% } %>
+                        </div>
+                        <input type="hidden" id="selected-size" name="size" 
+                               value="<%= product.sizes && product.sizes.length > 0 && product.sizes[0].quantity > 0 ? product.sizes[0].size : '' %>">
+                        <input type="hidden" id="selected-color-input" name="color" 
+                               value="<%= product.colors && product.colors.length > 0 ? product.colors[0].name : '' %>">
+                    </div>
+                    
+                    <!-- Quantity -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Quantity</h6>
+                        <div class="d-flex align-items-center" style="width: 150px;">
+                            <button class="btn btn-outline-dark quantity-btn" onclick="changeQuantity(-1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control text-center quantity-input" 
+                                   value="1" min="1" max="10" id="product-quantity" readonly>
+                            <button class="btn btn-outline-dark quantity-btn" onclick="changeQuantity(1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <% if (product.sizes && product.sizes.length > 0) { 
+                                const totalStock = product.sizes.reduce((sum, size) => sum + size.quantity, 0);
+                            %>
+                                <%= totalStock > 0 ? totalStock + ' items available' : 'Out of stock' %>
+                            <% } %>
+                        </small>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-3 mb-5">
+                        <% if (product.sizes && product.sizes.length > 0 && product.sizes.some(s => s.quantity > 0)) { %>
+                            <button class="btn btn-gold btn-lg py-3" onclick="addToCartProduct()">
+                                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+                            </button>
+                        <% } else { %>
+                            <button class="btn btn-secondary btn-lg py-3" disabled>
+                                <i class="fas fa-times-circle me-2"></i>Out of Stock
+                            </button>
+                        <% } %>
+                        
+                        <button class="btn btn-outline-dark btn-lg py-3">
+                            <i class="far fa-heart me-2"></i>Add to Wishlist
+                        </button>
+                    </div>
+                    
+                    <!-- Product Features -->
+                    <div class="mb-5">
+                        <h5 class="mb-3">Product Features</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon royal-icon me-3">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <span>Premium Quality Materials</span>
                                 </div>
-                                
-                                <a href="/products/<%= related._id %>" class="btn btn-outline-dark w-100">
-                                    View Details
-                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon royal-icon me-3">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <span>Comfortable Fit Guaranteed</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon royal-icon me-3">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <span>Durable Construction</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="feature-icon royal-icon me-3">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <span>Royal Warranty Included</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                <% }); %>
+                    
+                    <!-- Share Product -->
+                    <div class="border-top pt-4">
+                        <h6 class="mb-3">Share this product</h6>
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-outline-primary btn-sm">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-info btn-sm">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-danger btn-sm">
+                                <i class="fab fa-pinterest"></i>
+                            </a>
+                            <a href="#" class="btn btn-outline-success btn-sm">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    <% } %>
-</div>
-
-<!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <div class="royal-icon mb-4 mx-auto">
-                    <i class="fas fa-check fa-2x"></i>
+        
+        <!-- Product Tabs -->
+        <div class="mt-5 pt-5 border-top">
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button">
+                        Description
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="specifications-tab" data-bs-toggle="tab" data-bs-target="#specifications" type="button">
+                        Specifications
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+                        Reviews (<%= product.reviewsCount || 0 %>)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping" type="button">
+                        Shipping & Returns
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content p-4 border border-top-0 rounded-bottom" id="productTabsContent">
+                <!-- Description Tab -->
+                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                    <p><%= product.description %></p>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Materials</h6>
+                            <ul class="text-muted">
+                                <li>Premium leather upper</li>
+                                <li>Breathable mesh lining</li>
+                                <li>Memory foam insole</li>
+                                <li>Rubber outsole for grip</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Care Instructions</h6>
+                            <ul class="text-muted">
+                                <li>Wipe clean with damp cloth</li>
+                                <li>Air dry naturally</li>
+                                <li>Do not machine wash</li>
+                                <li>Store in cool, dry place</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <h4 class="mb-3">Added to Cart!</h4>
-                <p class="text-muted mb-4">Product has been successfully added to your shopping cart.</p>
-                <div class="d-grid gap-2">
-                    <a href="/cart" class="btn btn-gold">View Cart</a>
-                    <button class="btn btn-outline-dark" data-bs-dismiss="modal">Continue Shopping</button>
+                
+                <!-- Specifications Tab -->
+                <div class="tab-pane fade" id="specifications" role="tabpanel">
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th scope="row" style="width: 30%;">Brand</th>
+                                <td><%= product.brand %></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Category</th>
+                                <td class="text-capitalize"><%= product.category %></td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Available Sizes</th>
+                                <td>
+                                    <% if (product.sizes && product.sizes.length > 0) { %>
+                                        <% product.sizes.forEach((size, index) => { %>
+                                            US <%= size.size %><%= size.quantity > 0 ? ' (In stock)' : ' (Out of stock)' %>
+                                            <%= index < product.sizes.length - 1 ? ', ' : '' %>
+                                        <% }); %>
+                                    <% } else { %>
+                                        Not specified
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Available Colors</th>
+                                <td>
+                                    <% if (product.colors && product.colors.length > 0) { %>
+                                        <% product.colors.forEach((color, index) => { %>
+                                            <%= color.name %><%= index < product.colors.length - 1 ? ', ' : '' %>
+                                        <% }); %>
+                                    <% } else { %>
+                                        Not specified
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Weight</th>
+                                <td>Approximately 0.8 kg per pair</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Warranty</th>
+                                <td>1 year manufacturer warranty</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Reviews Tab -->
+                <div class="tab-pane fade" id="reviews" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="text-center mb-4">
+                                <h2 class="text-gold"><%= product.rating ? product.rating.toFixed(1) : '0.0' %></h2>
+                                <div class="mb-2">
+                                    <% for(let i = 1; i <= 5; i++) { %>
+                                        <% if (i <= Math.floor(rating)) { %>
+                                            <i class="fas fa-star text-warning fa-lg"></i>
+                                        <% } else if (i === Math.ceil(rating) && rating % 1 !== 0) { %>
+                                            <i class="fas fa-star-half-alt text-warning fa-lg"></i>
+                                        <% } else { %>
+                                            <i class="far fa-star text-warning fa-lg"></i>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                                <p class="text-muted">Based on <%= product.reviewsCount || 0 %> reviews</p>
+                            </div>
+                            
+                            <% if (user) { %>
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6>Write a Review</h6>
+                                        <form id="reviewForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">Rating</label>
+                                                <div class="rating-stars">
+                                                    <% for(let i = 5; i >= 1; i--) { %>
+                                                        <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>">
+                                                        <label for="star<%= i %>" class="star-label">★</label>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Review Title</label>
+                                                <input type="text" class="form-control" name="title">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Your Review</label>
+                                                <textarea class="form-control" name="comment" rows="3"></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-gold w-100">Submit Review</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="alert alert-info">
+                                    <p class="mb-0">Please <a href="/login" class="alert-link">login</a> to write a review.</p>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <!-- Sample Reviews -->
+                            <div class="review-list">
+                                <div class="review-item border-bottom pb-4 mb-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <strong>John Doe</strong>
+                                            <div class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">2 days ago</small>
+                                    </div>
+                                    <h6>Excellent Quality!</h6>
+                                    <p>These shoes are amazing! Perfect fit and very comfortable. The quality is outstanding.</p>
+                                </div>
+                                
+                                <div class="review-item border-bottom pb-4 mb-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <strong>Sarah Smith</strong>
+                                            <div class="text-warning">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">1 week ago</small>
+                                    </div>
+                                    <h6>Great but runs small</h6>
+                                    <p>Beautiful shoes but I recommend going half size up. Otherwise perfect!</p>
+                                </div>
+                                
+                                <% if (product.reviewsCount === 0) { %>
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                                        <h5>No reviews yet</h5>
+                                        <p class="text-muted">Be the first to review this product!</p>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shipping Tab -->
+                <div class="tab-pane fade" id="shipping" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Shipping Information</h6>
+                            <ul class="text-muted">
+                                <li>Free shipping on orders over $100</li>
+                                <li>Standard shipping: 3-5 business days</li>
+                                <li>Express shipping: 1-2 business days</li>
+                                <li>International shipping available</li>
+                                <li>Tracking number provided for all orders</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Return Policy</h6>
+                            <ul class="text-muted">
+                                <li>30-day return policy</li>
+                                <li>Items must be unworn and in original packaging</li>
+                                <li>Free returns for defective items</li>
+                                <li>Refund processed within 5-7 business days</li>
+                                <li>Contact support for return authorization</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Products -->
+        <% if (relatedProducts && relatedProducts.length > 0) { %>
+            <div class="mt-5 pt-5 border-top">
+                <h3 class="mb-4">You May Also Like</h3>
+                <div class="row g-4">
+                    <% relatedProducts.forEach(related => { %>
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="product-card luxury-card h-100">
+                                <div class="product-image position-relative">
+                                    <a href="/products/<%= related._id %>">
+                                        <img src="<%= related.colors && related.colors.length > 0 && related.colors[0].images && related.colors[0].images.length > 0 
+                                            ? related.colors[0].images[0].url 
+                                            : '/images/default-shoe.jpg' %>" 
+                                             alt="<%= related.name %>" 
+                                             class="img-fluid"
+                                             style="height: 150px; width: 100%; object-fit: contain; padding: 10px;">
+                                    </a>
+                                </div>
+                                <div class="product-content p-3">
+                                    <h6 class="product-title mb-1">
+                                        <a href="/products/<%= related._id %>" class="text-decoration-none text-dark">
+                                            <%= related.name %>
+                                        </a>
+                                    </h6>
+                                    <p class="product-brand text-muted small mb-2"><%= related.brand %></p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="product-price">
+                                            <% if (related.discountPrice && related.discountPrice < related.price) { %>
+                                                <span class="text-danger fw-bold">₹<%= related.discountPrice.toFixed(2) %></span>
+                                                <span class="text-muted text-decoration-line-through ms-2">₹<%= related.price.toFixed(2) %></span>
+                                            <% } else { %>
+                                                <span class="fw-bold">$<%= related.price.toFixed(2) %></span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    
+                                    <a href="/products/<%= related._id %>" class="btn btn-outline-dark w-100">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="royal-icon mb-4 mx-auto">
+                        <i class="fas fa-check fa-2x"></i>
+                    </div>
+                    <h4 class="mb-3">Added to Cart!</h4>
+                    <p class="text-muted mb-4">Product has been successfully added to your shopping cart.</p>
+                    <div class="d-grid gap-2">
+                        <a href="/cart" class="btn btn-gold">View Cart</a>
+                        <button class="btn btn-outline-dark" data-bs-dismiss="modal">Continue Shopping</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<script>
-// Product Detail Functions
-function changeMainImage(imageUrl) {
-    document.getElementById('product-main-image').src = imageUrl;
-}
-
-function selectColor(element) {
-    // Remove active class from all color options
-    document.querySelectorAll('.color-option').forEach(option => {
-        option.classList.remove('active');
-    });
     
-    // Add active class to selected color
-    element.classList.add('active');
-    
-    // Update selected color display
-    document.getElementById('selected-color').textContent = element.dataset.color;
-    document.getElementById('selected-color-input').value = element.dataset.color;
-    
-    // Change main image to selected color's first image
-    changeMainImage(element.dataset.image);
-}
-
-function selectSize(element) {
-    // Remove active class from all size options
-    document.querySelectorAll('.size-option').forEach(option => {
-        option.classList.remove('active');
-    });
-    
-    // Add active class to selected size
-    element.classList.add('active');
-    
-    // Update selected size display and input
-    const size = element.dataset.size;
-    document.getElementById('selected-size-display').textContent = 'US ' + size;
-    document.getElementById('selected-size').value = size;
-}
-
-function changeQuantity(delta) {
-    const input = document.getElementById('product-quantity');
-    let value = parseInt(input.value);
-    value += delta;
-    
-    // Validate min and max
-    const maxQuantity = 10;
-    const minQuantity = 1;
-    
-    if (value < minQuantity) value = minQuantity;
-    if (value > maxQuantity) value = maxQuantity;
-    
-    input.value = value;
-}
-
-function addToCartProduct() {
-    const productId = '<%= product._id %>';
-    const size = document.getElementById('selected-size').value;
-    const color = document.getElementById('selected-color-input').value;
-    const quantity = document.getElementById('product-quantity').value;
-    
-    // Validation
-    if (!size) {
-        showNotification('Please select a size', 'error');
-        return;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Product Detail Functions
+    function changeMainImage(imageUrl) {
+        document.getElementById('product-main-image').src = imageUrl;
     }
     
-    if (!color) {
-        showNotification('Please select a color', 'error');
-        return;
+    function selectColor(element) {
+        // Remove active class from all color options
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        
+        // Add active class to selected color
+        element.classList.add('active');
+        
+        // Update selected color display
+        document.getElementById('selected-color').textContent = element.dataset.color;
+        document.getElementById('selected-color-input').value = element.dataset.color;
+        
+        // Change main image to selected color's first image
+        changeMainImage(element.dataset.image);
     }
     
-    // Check if selected size is available
-    const sizeElement = document.querySelector(`.size-option[data-size="${size}"]`);
-    if (sizeElement && sizeElement.classList.contains('disabled')) {
-        showNotification('Selected size is out of stock', 'error');
-        return;
+    function selectSize(element) {
+        // Remove active class from all size options
+        document.querySelectorAll('.size-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        
+        // Add active class to selected size
+        element.classList.add('active');
+        
+        // Update selected size display and input
+        const size = element.dataset.size;
+        document.getElementById('selected-size-display').textContent = 'US ' + size;
+        document.getElementById('selected-size').value = size;
     }
     
-    // Prepare data
-    const data = {
-        productId: productId,
-        size: parseInt(size),
-        color: color,
-        quantity: parseInt(quantity)
-    };
+    function changeQuantity(delta) {
+        const input = document.getElementById('product-quantity');
+        let value = parseInt(input.value);
+        value += delta;
+        
+        // Validate min and max
+        const maxQuantity = 10;
+        const minQuantity = 1;
+        
+        if (value < minQuantity) value = minQuantity;
+        if (value > maxQuantity) value = maxQuantity;
+        
+        input.value = value;
+    }
     
-    // Show loading state
-    const addBtn = document.querySelector('.btn-gold');
-    const originalText = addBtn.innerHTML;
-    addBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
-    addBtn.disabled = true;
-    
-    // Send request
-    fetch('/cart/add', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Show success modal
-            const modal = new bootstrap.Modal(document.getElementById('successModal'));
-            modal.show();
-            
-            // Update cart count
-            updateCartCount();
-        } else {
-            showNotification(data.error || 'Failed to add to cart', 'error');
+    function addToCartProduct() {
+        const productId = '<%= product._id %>';
+        const size = document.getElementById('selected-size').value;
+        const color = document.getElementById('selected-color-input').value;
+        const quantity = document.getElementById('product-quantity').value;
+        
+        // Validation
+        if (!size) {
+            showNotification('Please select a size', 'error');
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred', 'error');
-    })
-    .finally(() => {
-        // Reset button state
-        addBtn.innerHTML = originalText;
-        addBtn.disabled = false;
-    });
-}
-
-// Review form handling
-document.addEventListener('DOMContentLoaded', function() {
-    // Star rating for reviews
-    const starInputs = document.querySelectorAll('.rating-stars input');
-    const starLabels = document.querySelectorAll('.rating-stars .star-label');
-    
-    starLabels.forEach((label, index) => {
-        label.addEventListener('click', function() {
-            const value = 5 - index;
-            starInputs.forEach((input, i) => {
-                input.checked = (5 - i) <= value;
-            });
-        });
-    });
-    
-    // Review form submission
-    const reviewForm = document.getElementById('reviewForm');
-    if (reviewForm) {
-        reviewForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const rating = formData.get('rating');
-            const title = formData.get('title');
-            const comment = formData.get('comment');
-            
-            if (!rating) {
-                showNotification('Please select a rating', 'error');
-                return;
-            }
-            
-            if (!title || !comment) {
-                showNotification('Please fill in all fields', 'error');
-                return;
-            }
-            
-            // Here you would send the review to your server
-            // For now, just show a success message
-            showNotification('Review submitted successfully!', 'success');
-            this.reset();
-            
-            // Reset star ratings
-            starInputs.forEach(input => input.checked = false);
-        });
-    }
-    
-    // Initialize tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-    
-    // Initialize tab functionality
-    const triggerTabList = [].slice.call(document.querySelectorAll('#productTabs button'));
-    triggerTabList.forEach(function (triggerEl) {
-        const tabTrigger = new bootstrap.Tab(triggerEl);
-        triggerEl.addEventListener('click', function (event) {
-            event.preventDefault();
-            tabTrigger.show();
-        });
-    });
-    
-    // Auto-select first available size
-    const availableSize = document.querySelector('.size-option:not(.disabled)');
-    if (availableSize && !document.querySelector('.size-option.active')) {
-        selectSize(availableSize);
-    }
-});
-
-// Show notification function
-function showNotification(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = `
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-    `;
-    
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.remove();
+        
+        if (!color) {
+            showNotification('Please select a color', 'error');
+            return;
         }
-    }, 5000);
-}
-
-// Update cart count function
-function updateCartCount() {
-    fetch('/cart/count')
+        
+        // Check if selected size is available
+        const sizeElement = document.querySelector(`.size-option[data-size="${size}"]`);
+        if (sizeElement && sizeElement.classList.contains('disabled')) {
+            showNotification('Selected size is out of stock', 'error');
+            return;
+        }
+        
+        // Prepare data
+        const data = {
+            productId: productId,
+            size: parseInt(size),
+            color: color,
+            quantity: parseInt(quantity)
+        };
+        
+        // Show loading state
+        const addBtn = document.querySelector('.btn-gold');
+        const originalText = addBtn.innerHTML;
+        addBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        addBtn.disabled = true;
+        
+        // Send request
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
         .then(response => response.json())
         .then(data => {
-            const cartBadge = document.querySelector('.cart-count-badge');
-            if (cartBadge) {
-                if (data.count > 0) {
-                    cartBadge.textContent = data.count;
-                    cartBadge.style.display = 'flex';
-                } else {
-                    cartBadge.style.display = 'none';
-                }
+            if (data.success) {
+                // Show success modal
+                const modal = new bootstrap.Modal(document.getElementById('successModal'));
+                modal.show();
+                
+                // Update cart count
+                updateCartCount();
+            } else {
+                showNotification(data.error || 'Failed to add to cart', 'error');
             }
         })
         .catch(error => {
-            console.error('Error updating cart count:', error);
+            console.error('Error:', error);
+            showNotification('An error occurred', 'error');
+        })
+        .finally(() => {
+            // Reset button state
+            addBtn.innerHTML = originalText;
+            addBtn.disabled = false;
         });
-}
-</script>
-
-<style>
-/* Product Detail Styles */
-.cursor-pointer {
-    cursor: pointer;
-}
-
-.color-option {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 3px solid transparent;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.color-option.active {
-    border-color: var(--accent-color);
-    transform: scale(1.1);
-}
-
-.color-option.active::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-}
-
-.size-option {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #e9ecef;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-}
-
-.size-option.active {
-    border-color: var(--accent-color);
-    background: var(--accent-color);
-    color: white;
-}
-
-.size-option.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: #f8f9fa;
-}
-
-.size-option.disabled:hover {
-    border-color: #e9ecef;
-}
-
-.quantity-input {
-    font-weight: 600;
-}
-
-.quantity-btn {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Review Stars */
-.rating-stars {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-}
-
-.rating-stars input {
-    display: none;
-}
-
-.rating-stars .star-label {
-    font-size: 24px;
-    color: #ddd;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.rating-stars input:checked ~ .star-label,
-.rating-stars .star-label:hover,
-.rating-stars .star-label:hover ~ .star-label {
-    color: #ffc107;
-}
-
-.rating-stars input:checked + .star-label {
-    color: #ffc107;
-}
-
-/* Tabs */
-.nav-tabs .nav-link {
-    border: none;
-    color: #6c757d;
-    font-weight: 500;
-    padding: 12px 24px;
-}
-
-.nav-tabs .nav-link.active {
-    color: var(--accent-color);
-    border-bottom: 3px solid var(--accent-color);
-    background: transparent;
-}
-
-/* Review List */
-.review-item:last-child {
-    border-bottom: none !important;
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .product-title {
-        font-size: 1.5rem;
     }
     
-    .product-price h2 {
-        font-size: 1.8rem;
+    // Review form handling
+    document.addEventListener('DOMContentLoaded', function() {
+        // Star rating for reviews
+        const starInputs = document.querySelectorAll('.rating-stars input');
+        const starLabels = document.querySelectorAll('.rating-stars .star-label');
+        
+        starLabels.forEach((label, index) => {
+            label.addEventListener('click', function() {
+                const value = 5 - index;
+                starInputs.forEach((input, i) => {
+                    input.checked = (5 - i) <= value;
+                });
+            });
+        });
+        
+        // Review form submission
+        const reviewForm = document.getElementById('reviewForm');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const rating = formData.get('rating');
+                const title = formData.get('title');
+                const comment = formData.get('comment');
+                
+                if (!rating) {
+                    showNotification('Please select a rating', 'error');
+                    return;
+                }
+                
+                if (!title || !comment) {
+                    showNotification('Please fill in all fields', 'error');
+                    return;
+                }
+                
+                // Here you would send the review to your server
+                // For now, just show a success message
+                showNotification('Review submitted successfully!', 'success');
+                this.reset();
+                
+                // Reset star ratings
+                starInputs.forEach(input => input.checked = false);
+            });
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Initialize tab functionality
+        const triggerTabList = [].slice.call(document.querySelectorAll('#productTabs button'));
+        triggerTabList.forEach(function (triggerEl) {
+            const tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+        
+        // Auto-select first available size
+        const availableSize = document.querySelector('.size-option:not(.disabled)');
+        if (availableSize && !document.querySelector('.size-option.active')) {
+            selectSize(availableSize);
+        }
+    });
+    
+    // Show notification function
+    function showNotification(message, type = 'info') {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = `
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        `;
+        
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
     }
     
-    .nav-tabs .nav-link {
-        padding: 8px 16px;
-        font-size: 0.9rem;
+    // Update cart count function
+    function updateCartCount() {
+        fetch('/cart/count')
+            .then(response => response.json())
+            .then(data => {
+                const cartBadge = document.querySelector('.cart-count-badge');
+                if (cartBadge) {
+                    if (data.count > 0) {
+                        cartBadge.textContent = data.count;
+                        cartBadge.style.display = 'flex';
+                    } else {
+                        cartBadge.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error updating cart count:', error);
+            });
     }
+    </script>
+    
+    <style>
+    /* Product Detail Styles */
+    .cursor-pointer { cursor: pointer; }
     
     .color-option {
-        width: 35px;
-        height: 35px;
+        width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+        border: 3px solid transparent; transition: all 0.3s ease; position: relative;
+    }
+    .color-option.active {
+        border-color: var(--accent-color); transform: scale(1.1);
+    }
+    .color-option.active::after {
+        content: '✓'; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%); color: white;
+        font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
     
     .size-option {
-        width: 45px;
-        height: 45px;
+        width: 50px; height: 50px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; border: 2px solid #e9ecef;
+        border-radius: var(--border-radius); cursor: pointer;
+        transition: all 0.3s ease; font-weight: 600;
     }
-}
-
-@media (max-width: 576px) {
-    .breadcrumb {
-        font-size: 0.8rem;
+    .size-option.active {
+        border-color: var(--accent-color); background: var(--accent-color); color: white;
     }
+    .size-option.disabled { opacity: 0.5; cursor: not-allowed; background: #f8f9fa; }
+    .size-option.disabled:hover { border-color: #e9ecef; }
     
-    .product-features .col-md-6 {
-        margin-bottom: 15px;
+    .quantity-input { font-weight: 600; }
+    .quantity-btn { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; }
+    
+    /* Review Stars */
+    .rating-stars { display: flex; flex-direction: row-reverse; justify-content: flex-end; }
+    .rating-stars input { display: none; }
+    .rating-stars .star-label { font-size: 24px; color: #ddd; cursor: pointer; transition: color 0.3s; }
+    .rating-stars input:checked ~ .star-label,
+    .rating-stars .star-label:hover,
+    .rating-stars .star-label:hover ~ .star-label { color: #ffc107; }
+    .rating-stars input:checked + .star-label { color: #ffc107; }
+    
+    /* Tabs */
+    .nav-tabs .nav-link { border: none; color: #6c757d; font-weight: 500; padding: 12px 24px; }
+    .nav-tabs .nav-link.active { color: var(--accent-color); border-bottom: 3px solid var(--accent-color); background: transparent; }
+    
+    /* Review List */
+    .review-item:last-child { border-bottom: none !important; margin-bottom: 0 !important; padding-bottom: 0 !important; }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .product-title { font-size: 1.5rem; }
+        .product-price h2 { font-size: 1.8rem; }
+        .nav-tabs .nav-link { padding: 8px 16px; font-size: 0.9rem; }
+        .color-option { width: 35px; height: 35px; }
+        .size-option { width: 45px; height: 45px; }
     }
-}
-</style>
+    @media (max-width: 576px) {
+        .breadcrumb { font-size: 0.8rem; }
+        .product-features .col-md-6 { margin-bottom: 15px; }
+    }
+    </style>
+</body>
+</html>

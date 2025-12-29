@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 const mongoose = require('mongoose');
@@ -6,23 +7,21 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const path = require('path');
 const methodOverride = require('method-override');
+const connectDB = require('./config/database');
+const { ensureAuthenticated, ensureAdmin } = require('./middleware/auth');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
 
 // Import models
 const Product = require('./models/Product');
 const User = require('./models/User');
 
-
 // Import routes
 const adminRoutes = require('./routes/admin');
 
-// Import configurations
-const connectDB = require('./config/database');
+// Import Passport configuration
 require('./config/passport-config');
 
 const app = express();
-
 
 // Connect to MongoDB
 connectDB();
@@ -46,7 +45,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'royal-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 } // 24 hours
+  cookie: { 
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true
+  }
 }));
 
 // Passport middleware
@@ -62,10 +64,11 @@ app.use((req, res, next) => {
   res.locals.error_msg = req.flash('error_msg');
   res.locals.error = req.flash('error');
   res.locals.user = req.user || null;
+  res.locals.title = 'Royal Footwear';
   next();
 });
 
-
+// ==================== ROUTES ====================
 // Use admin routes
 app.use('/admin', adminRoutes);
 
@@ -129,61 +132,437 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// Other routes
 
-app.use('/products', require('./routes/products'));
-app.use('/cart', require('./routes/cart'));
-app.use('/orders', require('./routes/orders'));
-app.use('/', require('./routes/auth'));
-
-// Home route - Fixed
+// Home route
 app.get('/', async (req, res) => {
   try {
-    let featuredProducts = [];
-    let categories = [];
+    console.log('🏠 GET / - Rendering home page');
     
-    if (Product) {
-      try {
-        featuredProducts = await Product.find({ featured: true })
-          .limit(8)
-          .sort({ createdAt: -1 });
-        
-        categories = await Product.distinct('category');
-      } catch (dbError) {
-        console.log('Database might be empty or Product model not defined');
+    const featuredProducts = await Product.find({ 
+      featured: true,
+      'sizes.quantity': { $gt: 0 }
+    })
+    .limit(8)
+    .sort({ createdAt: -1 })
+    .lean();
+    
+    // Get category images
+    const categoryImages = {};
+    const categories = ['sneakers', 'formal', 'boots', 'sandals', 'sports', 'loafers'];
+    
+    for (const category of categories) {
+      const product = await Product.findOne({ 
+        category: category,
+        'sizes.quantity': { $gt: 0 }
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+      
+      if (product?.colors?.[0]?.images?.[0]?.url) {
+        categoryImages[category] = product.colors[0].images[0].url;
       }
     }
     
-    if (!categories || categories.length === 0) {
-      categories = ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'];
+    // Get hero image
+    let heroImage = '/images/hero-shoe.png';
+    if (featuredProducts.length > 0) {
+      const heroProduct = featuredProducts[0];
+      if (heroProduct?.colors?.[0]?.images?.[0]?.url) {
+        heroImage = heroProduct.colors[0].images[0].url;
+      }
     }
     
-    res.render('index', { 
-      title: 'Royal Footwear - Premium Shoes',
-      featuredProducts: featuredProducts || [],
-      categories: categories || [],
-      user: req.user || null
+    // Enhance featured products with images
+    const enhancedProducts = featuredProducts.map(product => {
+      let productImage = '/images/default-shoe.jpg';
+      if (product?.colors?.[0]?.images?.[0]?.url) {
+        productImage = product.colors[0].images[0].url;
+      }
+      
+      return {
+        ...product,
+        productImage
+      };
     });
+    
+    console.log(`✅ Home page loaded - Products: ${enhancedProducts.length}`);
+    
+    res.render('index', {
+      title: 'Royal Footwear - Premium Shoes Collection',
+      user: req.user,
+      featuredProducts: enhancedProducts,
+      categoryImages: categoryImages,
+      heroImage: heroImage,
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
+    });
+    
   } catch (error) {
-    console.error('Error loading home page:', error);
-    res.render('index', { 
-      title: 'Royal Footwear - Premium Shoes',
+    console.error('❌ Error loading home page:', error);
+    res.status(500).render('index', {
+      title: 'Royal Footwear',
+      user: req.user,
       featuredProducts: [],
-      categories: ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'],
-      user: req.user || null
+      categoryImages: {},
+      heroImage: '/images/hero-shoe.png',
+      error_msg: 'Error loading page'
     });
   }
 });
 
+// ==================== AUTHENTICATION ROUTES ====================
+
+// Login Page
+app.get('/login', (req, res) => {
+  if (req.isAuthenticated()) {
+    req.flash('info_msg', 'You are already logged in');
+    return res.redirect('/');
+  }
+  
+  res.render('auth/login', {
+    title: 'Login | Royal Footwear',
+    errors: [],
+    email: '',
+    error_msg: req.flash('error_msg'),
+    success_msg: req.flash('success_msg')
+  });
+});
+
+// Register Page
+app.get('/register', (req, res) => {
+  if (req.isAuthenticated()) {
+    req.flash('info_msg', 'You are already logged in');
+    return res.redirect('/');
+  }
+  
+  res.render('auth/register', {
+    title: 'Create Account | Royal Footwear',
+    errors: [],
+    name: '',
+    email: '',
+    error_msg: req.flash('error_msg'),
+    success_msg: req.flash('success_msg')
+  });
+});
+
+// Register Handle
+app.post('/register', async (req, res) => {
+  console.log('📝 Registration attempt');
+  console.log('Request body:', req.body);
+  
+  try {
+    const { name, email, password, confirm_password } = req.body;
+    
+    let errors = [];
+
+    // Validation
+    if (!name || !email || !password || !confirm_password) {
+      errors.push({ msg: 'Please fill in all fields' });
+      console.log('❌ Missing fields');
+    }
+
+    if (password !== confirm_password) {
+      errors.push({ msg: 'Passwords do not match' });
+      console.log('❌ Passwords do not match');
+    }
+
+    if (password.length < 6) {
+      errors.push({ msg: 'Password must be at least 6 characters long' });
+      console.log('❌ Password too short');
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      errors.push({ msg: 'Please enter a valid email address' });
+      console.log('❌ Invalid email format');
+    }
+
+    // If there are errors, render again with errors
+    if (errors.length > 0) {
+      console.log('❌ Validation errors:', errors);
+      return res.render('auth/register', {
+        title: 'Create Account | Royal Footwear',
+        errors,
+        name,
+        email
+      });
+    }
+
+    // Check if user already exists
+    console.log('🔍 Checking if user exists:', email.toLowerCase());
+    const userExists = await User.findOne({ email: email.toLowerCase() });
+    
+    if (userExists) {
+      console.log('❌ User already exists:', email);
+      errors.push({ msg: 'Email is already registered' });
+      return res.render('auth/register', {
+        title: 'Create Account | Royal Footwear',
+        errors,
+        name,
+        email
+      });
+    }
+
+    console.log('👤 Creating new user...');
+    // Create new user
+    const newUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: password,
+      role: 'customer'
+    });
+
+    console.log('💾 Saving user to database...');
+    await newUser.save();
+    console.log(`✅ User registered: ${newUser.email}`);
+    console.log('User ID:', newUser._id);
+    console.log('Password field exists:', !!newUser.password);
+
+    // Auto login after registration
+    console.log('🔐 Attempting auto-login...');
+    req.login(newUser, (err) => {
+      if (err) {
+        console.error('❌ Auto login error:', err);
+        req.flash('success_msg', '🎉 Registration successful! Please login.');
+        return res.redirect('/login');
+      }
+      
+      console.log('✅ Auto-login successful');
+      req.flash('success_msg', `🎉 Welcome ${newUser.name}! Registration successful.`);
+      return res.redirect('/');
+    });
+
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    
+    let errorMessage = 'Registration failed. Please try again.';
+    
+    // Handle specific errors
+    if (error.code === 11000) {
+      errorMessage = 'Email is already registered';
+    } else if (error.name === 'ValidationError') {
+      errorMessage = Object.values(error.errors).map(err => err.message).join(', ');
+    }
+    
+    req.flash('error_msg', errorMessage);
+    res.redirect('/register');
+  }
+});
+
+// Login Handle
+app.post('/login', (req, res, next) => {
+  passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/login',
+    failureFlash: true
+  })(req, res, next);
+});
+
+// Logout Handle
+app.get('/logout', (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    req.flash('error_msg', 'You are not logged in!');
+    return res.redirect('/login');
+  }
+  
+  const userName = req.user ? req.user.name : 'User';
+  const userEmail = req.user ? req.user.email : '';
+  
+  req.logout((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+      return next(err);
+    }
+    
+    console.log(`👋 User logged out: ${userEmail}`);
+    req.flash('success_msg', `Goodbye, ${userName}! You have been logged out successfully.`);
+    res.redirect('/login');
+  });
+});
+
+// Profile Page (Protected)
+app.get('/profile', (req, res) => {
+  if (!req.isAuthenticated()) {
+    req.flash('error_msg', 'Please login to view your profile');
+    return res.redirect('/login');
+  }
+  
+  res.render('auth/profile', {
+    title: 'My Profile | Royal Footwear',
+    user: req.user,
+    success_msg: req.flash('success_msg'),
+    error_msg: req.flash('error_msg'),
+    orders: [] // You can add actual orders from database
+  });
+});
+
+// Update Profile
+app.post('/profile/update', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    req.flash('error_msg', 'Please login to update your profile');
+    return res.redirect('/login');
+  }
+  
+  try {
+    const { name, phone, avatar, newsletter } = req.body;
+    
+    await User.findByIdAndUpdate(req.user._id, {
+      name,
+      'address.phone': phone,
+      avatar: avatar || req.user.avatar,
+      newsletterSubscription: newsletter === 'on'
+    });
+    
+    req.flash('success_msg', 'Profile updated successfully');
+    res.redirect('/profile');
+  } catch (error) {
+    console.error('Profile update error:', error);
+    req.flash('error_msg', 'Failed to update profile');
+    res.redirect('/profile');
+  }
+});
+
+// Update Address
+app.post('/profile/update-address', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    req.flash('error_msg', 'Please login to update address');
+    return res.redirect('/login');
+  }
+  
+  try {
+    const { street, city, state, country, zipCode } = req.body;
+    
+    await User.findByIdAndUpdate(req.user._id, {
+      'address.street': street,
+      'address.city': city,
+      'address.state': state,
+      'address.country': country,
+      'address.zipCode': zipCode
+    });
+    
+    req.flash('success_msg', 'Address updated successfully');
+    res.redirect('/profile');
+  } catch (error) {
+    console.error('Address update error:', error);
+    req.flash('error_msg', 'Failed to update address');
+    res.redirect('/profile');
+  }
+});
+
+// Change Password
+app.post('/profile/change-password', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    req.flash('error_msg', 'Please login to change password');
+    return res.redirect('/login');
+  }
+  
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    
+    const errors = [];
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      errors.push('Please fill in all fields');
+    }
+    
+    if (newPassword !== confirmPassword) {
+      errors.push('New passwords do not match');
+    }
+    
+    if (newPassword.length < 6) {
+      errors.push('New password must be at least 6 characters');
+    }
+    
+    if (errors.length > 0) {
+      req.flash('error_msg', errors[0]);
+      return res.redirect('/profile');
+    }
+    
+    // Get fresh user data
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      req.flash('error_msg', 'User not found');
+      return res.redirect('/profile');
+    }
+    
+    // Check current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    
+    if (!isMatch) {
+      req.flash('error_msg', 'Current password is incorrect');
+      return res.redirect('/profile');
+    }
+    
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+    
+    req.flash('success_msg', 'Password changed successfully');
+    res.redirect('/profile');
+  } catch (error) {
+    console.error('Change password error:', error);
+    req.flash('error_msg', 'Failed to change password');
+    res.redirect('/profile');
+  }
+})
+
+// ==================== OTHER ROUTES ====================
+
+
+
+// Other routes
+app.use('/products', require('./routes/products'));
+app.use('/cart', require('./routes/cart'));
+app.use('/orders', require('./routes/orders'));
+
+// Contact page
+app.get('/contact', (req, res) => {
+  res.render('contact', { 
+    title: 'Contact Us | Royal Footwear',
+    user: req.user
+  });
+});
+
+// About page
+app.get('/about', (req, res) => {
+  res.render('about', { 
+    title: 'About Us | Royal Footwear',
+    user: req.user
+  });
+});
+
+
+
 // 404 handler
 app.use((req, res) => {
-    res.status(404).render('404', { 
-        title: 'Page Not Found | Royal Footwear',
-        user: req.user || null
-    });
+  res.status(404).render('404', { 
+    title: 'Page Not Found | Royal Footwear',
+    user: req.user
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).render('500', {
+    title: 'Server Error | Royal Footwear',
+    user: req.user,
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!'
+  });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Authentication system ready`);
 });

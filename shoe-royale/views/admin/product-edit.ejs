@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - <%= product.name %></title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --royal-gold: #ffd700;
+            --light-bg: #f5f7fb;
+        }
+        
+        body {
+            background: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .admin-navbar {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-container {
+            padding: 30px 0 50px 0;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--royal-gold);
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .section-title {
+            color: var(--primary-dark);
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--royal-gold);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--royal-gold);
+            box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25);
+        }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, var(--royal-gold) 0%, #ffed4e 100%);
+            color: var(--primary-dark);
+            border: none;
+            font-weight: 700;
+            padding: 12px 30px;
+            border-radius: 8px;
+        }
+        
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+        
+        .size-card, .color-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .image-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .image-upload-area:hover {
+            border-color: var(--royal-gold);
+            background: #fff9e6;
+        }
+        
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #dee2e6;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .remove-image:hover {
+            background: #c82333;
+            transform: scale(1.1);
+        }
+        
+        .existing-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .existing-image-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+        }
+        
+        .existing-image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .existing-image-checkbox {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            z-index: 2;
+        }
+        
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Navbar -->
+    <nav class="admin-navbar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="fas fa-crown me-2 text-warning"></i>
+                        Royal Admin Panel
+                    </h4>
+                    <small class="text-light">Welcome, <%= user ? user.name : 'Admin' %></small>
+                </div>
+                <div>
+                    <a href="/admin/dashboard" class="btn btn-light btn-sm me-2">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
+                    <a href="/admin/products" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container admin-container">
+        <!-- Flash Messages -->
+        <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle me-3 fa-lg"></i>
+                    <div><%= success_msg %></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle me-3 fa-lg"></i>
+                    <div><%= error_msg %></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="h3 fw-bold mb-2">
+                <i class="fas fa-edit text-warning me-2"></i>
+                Edit Product
+            </h1>
+            <p class="text-muted mb-0">Edit product details for: <strong><%= product.name %></strong></p>
+        </div>
+        
+        <!-- Product Form -->
+        <form action="/admin/products/update/<%= product._id %>" method="POST" enctype="multipart/form-data" id="productForm">
+            <div class="form-card">
+                <!-- Basic Information Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="name" class="form-label required">Product Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   value="<%= product.name %>"
+                                   placeholder="Enter product name">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="category" class="form-label required">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" disabled>Select category</option>
+                                <% if(categories && categories.length > 0) { %>
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category %>" 
+                                                <%= product.category === category ? 'selected' : '' %>>
+                                            <%= category.charAt(0).toUpperCase() + category.slice(1) %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="brand" class="form-label required">Brand</label>
+                            <select class="form-select" id="brand" name="brand" required>
+                                <option value="" disabled>Select brand</option>
+                                <% if(brands && brands.length > 0) { %>
+                                    <% brands.forEach(brand => { %>
+                                        <option value="<%= brand %>" 
+                                                <%= product.brand === brand ? 'selected' : '' %>>
+                                            <%= brand %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Product Status</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="featured" name="featured" 
+                                       <%= product.featured ? 'checked' : '' %>>
+                                <label class="form-check-label" for="featured">
+                                    Mark as Featured Product
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label required">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4" required placeholder="Enter product description"><%= product.description %></textarea>
+                    </div>
+                </div>
+                
+                <!-- Pricing Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-tag"></i>
+                        Pricing
+                    </h3>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label required">Regular Price (₹)</label>
+                            <input type="number" class="form-control" id="price" name="price" 
+                                   step="0.01" min="0" required 
+                                   value="<%= product.price %>"
+                                   placeholder="0.00">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="discountPrice" class="form-label">Discount Price (₹)</label>
+                            <input type="number" class="form-control" id="discountPrice" 
+                                   name="discountPrice" step="0.01" min="0" 
+                                   value="<%= product.discountPrice || '' %>"
+                                   placeholder="Optional">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sizes & Stock Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-shoe-prints"></i>
+                        Sizes & Stock Management
+                    </h3>
+                    
+                    <div class="row">
+                        <% 
+                        const sizesList = sizes || [6, 7, 8, 9, 10, 11, 12];
+                        sizesList.forEach(size => { 
+                            // Find if this size exists in product
+                            const sizeObj = product.sizes.find(s => s.size === size);
+                            const quantity = sizeObj ? sizeObj.quantity : 0;
+                            const isChecked = quantity > 0;
+                        %>
+                            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                <div class="size-card">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input size-checkbox" 
+                                               type="checkbox" 
+                                               id="size_<%= size %>" 
+                                               name="sizes" 
+                                               value="<%= size %>"
+                                               <%= isChecked ? 'checked' : '' %>>
+                                        <label class="form-check-label fw-bold" for="size_<%= size %>">
+                                            Size <%= size %>
+                                        </label>
+                                    </div>
+                                    
+                                    <input type="number" class="form-control form-control-sm quantity-input" 
+                                           id="size_<%= size %>_quantity" 
+                                           name="size_<%= size %>_quantity" 
+                                           min="0" 
+                                           value="<%= quantity %>" 
+                                           placeholder="Qty" 
+                                           data-size="<%= size %>"
+                                           <%= isChecked ? '' : 'disabled' %>>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <!-- Colors Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-palette"></i>
+                        Colors
+                    </h3>
+                    
+                    <div class="row">
+                        <% 
+                        const colorsList = colors || [
+                            { name: 'Black', code: '#000000' },
+                            { name: 'White', code: '#FFFFFF' },
+                            { name: 'Red', code: '#FF0000' },
+                            { name: 'Blue', code: '#0000FF' },
+                            { name: 'Green', code: '#008000' },
+                            { name: 'Brown', code: '#8B4513' },
+                            { name: 'Gray', code: '#808080' },
+                            { name: 'Navy Blue', code: '#000080' },
+                            { name: 'Maroon', code: '#800000' },
+                            { name: 'Orange', code: '#FFA500' },
+                            { name: 'Yellow', code: '#FFFF00' },
+                            { name: 'Pink', code: '#FFC0CB' },
+                            { name: 'Purple', code: '#800080' },
+                            { name: 'Beige', code: '#F5F5DC' },
+                            { name: 'Khaki', code: '#C3B091' }
+                        ];
+                        
+                        colorsList.forEach(color => { 
+                            // Check if this color exists in product
+                            const colorObj = product.colors.find(c => c.name === color.name);
+                            const isChecked = !!colorObj;
+                            const colorCode = colorObj ? colorObj.code : color.code;
+                        %>
+                            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                <div class="color-card">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input color-checkbox" 
+                                               type="checkbox" 
+                                               id="color_<%= color.name %>" 
+                                               name="colors" 
+                                               value="<%= color.name %>"
+                                               <%= isChecked ? 'checked' : '' %>>
+                                        <label class="form-check-label" for="color_<%= color.name %>">
+                                            <span class="color-preview me-2" 
+                                                  style="background-color: <%= colorCode %>"></span>
+                                            <%= color.name %>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <label class="form-label small">Color Code</label>
+                                        <input type="color" 
+                                               class="form-control form-control-color p-1 color-code-input" 
+                                               id="color_<%= color.name %>_code" 
+                                               name="color_<%= color.name %>_code" 
+                                               value="<%= colorCode %>" 
+                                               title="Choose color" 
+                                               data-color="<%= color.name %>"
+                                               <%= isChecked ? '' : 'disabled' %>>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <!-- Images Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-images"></i>
+                        Product Images
+                    </h3>
+                    
+                    <!-- Existing Images -->
+                    <% if (product.colors && product.colors.length > 0) { %>
+                        <div class="mb-4">
+                            <h6 class="mb-3">Current Images</h6>
+                            <p class="text-muted small">Check the images you want to keep. Unchecked images will be deleted.</p>
+                            
+                            <div class="existing-images">
+                                <% 
+                                let imageIndex = 0;
+                                product.colors.forEach((color, colorIndex) => { 
+                                    color.images.forEach((image, imgIndex) => { 
+                                %>
+                                    <div class="existing-image-item">
+                                        <input type="checkbox" 
+                                               class="form-check-input existing-image-checkbox" 
+                                               id="keep_image_<%= imageIndex %>" 
+                                               name="keepImages[]" 
+                                               value="<%= image.public_id %>"
+                                               checked>
+                                        <img src="<%= image.url %>" 
+                                             alt="<%= product.name %> - <%= color.name %>">
+                                        <div class="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-75 text-white p-1 small">
+                                            <%= color.name %> - <%= imgIndex + 1 %>
+                                        </div>
+                                    </div>
+                                <% 
+                                        imageIndex++;
+                                    }); 
+                                }); 
+                                %>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- Add New Images -->
+                    <div class="mb-3">
+                        <label class="form-label">Add New Images (Optional)</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="newImages" 
+                               name="newImages" 
+                               accept="image/*" 
+                               multiple>
+                        <div class="form-text mt-1">Select new images to add (JPG, PNG, WebP). Max 10 images, 5MB each.</div>
+                        
+                        <!-- Upload Area -->
+                        <div class="image-upload-area mt-3" id="imageUploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
+                            <h5 class="mb-2">Click to browse new images</h5>
+                            <p class="text-muted small mb-0">Drag & drop or click to select images</p>
+                        </div>
+                        
+                        <!-- New Images Preview -->
+                        <div id="imagePreviewContainer" class="image-preview-container mt-3"></div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between pt-3 border-top">
+                    <button type="button" class="btn btn-outline-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash me-2"></i> Delete Product
+                    </button>
+                    
+                    <div>
+                        <a href="/admin/products" class="btn btn-outline-secondary me-3">
+                            <i class="fas fa-times me-2"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-gold">
+                            <i class="fas fa-save me-2"></i> Update Product
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="royal-icon mb-4 mx-auto" style="background: #dc3545; color: white;">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <h4 class="mb-3">Delete Product?</h4>
+                    <p class="text-muted mb-4">
+                        Are you sure you want to delete <strong><%= product.name %></strong>? 
+                        This action cannot be undone and all product data will be permanently deleted.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <form action="/admin/products/delete/<%= product._id %>" method="POST" id="deleteForm">
+                            <button type="submit" class="btn btn-danger w-100 mb-2">Yes, Delete Permanently</button>
+                        </form>
+                        <button class="btn btn-outline-dark" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Global variable to store all selected files
+    let allSelectedFiles = [];
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Focus on name field
+        document.getElementById('name').focus();
+        
+        // File input elements
+        const imageInput = document.getElementById('newImages');
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        
+        // Create file count display
+        if (imageInput) {
+            const countDisplay = document.createElement('div');
+            countDisplay.id = 'fileCountDisplay';
+            countDisplay.className = 'text-muted small mt-2';
+            countDisplay.textContent = 'No new images selected';
+            imageInput.parentNode.appendChild(countDisplay);
+        }
+        
+        // Click on upload area to trigger file input
+        if (imageUploadArea && imageInput) {
+            imageUploadArea.addEventListener('click', () => {
+                imageInput.click();
+            });
+        }
+        
+        // Image preview functionality for NEW images
+        if (imageInput) {
+            imageInput.addEventListener('change', function(e) {
+                const newFiles = Array.from(e.target.files);
+                
+                if (newFiles.length === 0) {
+                    updateFileCountDisplay();
+                    return;
+                }
+                
+                // Check total images (existing + new)
+                const existingImages = document.querySelectorAll('.existing-image-checkbox:checked').length;
+                const totalSelected = allSelectedFiles.length + newFiles.length;
+                if (totalSelected > 10) {
+                    alert(`Maximum 10 images allowed. You already have ${existingImages} existing images and ${allSelectedFiles.length} new images.`);
+                    return;
+                }
+                
+                // Clear error message if present
+                if (imagePreviewContainer.innerHTML.includes('No images selected')) {
+                    imagePreviewContainer.innerHTML = '';
+                }
+                
+                // Process new files
+                newFiles.forEach((file, index) => {
+                    // Validate file type
+                    if (!file.type.match('image.*')) {
+                        alert(`"${file.name}" is not an image file. Skipping.`);
+                        return;
+                    }
+                    
+                    // Validate file size
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert(`"${file.name}" is too large (max 5MB). Skipping.`);
+                        return;
+                    }
+                    
+                    // Add file to global array
+                    allSelectedFiles.push(file);
+                    
+                    // Create preview for this file
+                    createImagePreview(file, allSelectedFiles.length - 1);
+                });
+                
+                // Update actual file input with all files
+                updateFileInputWithAllFiles();
+                updateFileCountDisplay();
+            });
+        }
+        
+        // Function to create image preview
+        function createImagePreview(file, index) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'image-preview';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="New Preview ${index + 1}">
+                    <span class="position-absolute top-0 start-0 bg-dark text-white px-1 small">New ${index + 1}</span>
+                    <button type="button" class="remove-image" onclick="removeImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                imagePreviewContainer.appendChild(previewDiv);
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Function to update actual file input with all selected files
+        function updateFileInputWithAllFiles() {
+            const dataTransfer = new DataTransfer();
+            allSelectedFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            if (imageInput) {
+                imageInput.files = dataTransfer.files;
+            }
+        }
+        
+        // Function to update file count display
+        function updateFileCountDisplay() {
+            const countDisplay = document.getElementById('fileCountDisplay');
+            if (countDisplay) {
+                if (allSelectedFiles.length === 0) {
+                    countDisplay.textContent = 'No new images selected';
+                    countDisplay.style.color = '#6c757d';
+                    
+                    // Show empty message in preview container if empty
+                    if (imagePreviewContainer && imagePreviewContainer.children.length === 0) {
+                        imagePreviewContainer.innerHTML = '<p class="text-muted">No new images selected</p>';
+                    }
+                } else {
+                    countDisplay.textContent = `${allSelectedFiles.length} new image(s) selected`;
+                    countDisplay.style.color = '#198754';
+                }
+            }
+        }
+        
+        // Size checkbox functionality
+        document.querySelectorAll('.size-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const size = this.value;
+                const quantityInput = document.getElementById(`size_${size}_quantity`);
+                if (quantityInput) {
+                    quantityInput.disabled = !this.checked;
+                    if (!this.checked) {
+                        quantityInput.value = 0;
+                    } else {
+                        quantityInput.focus();
+                    }
+                }
+            });
+        });
+        
+        // Color checkbox functionality
+        document.querySelectorAll('.color-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const colorName = this.value;
+                const colorCodeInput = document.getElementById(`color_${colorName}_code`);
+                if (colorCodeInput) {
+                    colorCodeInput.disabled = !this.checked;
+                }
+            });
+        });
+        
+        // Auto-check existing images
+        document.querySelectorAll('.existing-image-checkbox').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    });
+    
+    // Global function to remove image
+    function removeImage(index) {
+        // Remove from array
+        allSelectedFiles.splice(index, 1);
+        
+        // Clear preview container
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        if (imagePreviewContainer) {
+            imagePreviewContainer.innerHTML = '';
+        }
+        
+        // Regenerate all previews with updated indices
+        allSelectedFiles.forEach((file, newIndex) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'image-preview';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="New Preview ${newIndex + 1}">
+                    <span class="position-absolute top-0 start-0 bg-dark text-white px-1 small">New ${newIndex + 1}</span>
+                    <button type="button" class="remove-image" onclick="removeImage(${newIndex})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                imagePreviewContainer.appendChild(previewDiv);
+            };
+            reader.readAsDataURL(file);
+        });
+        
+        // Update file input and count
+        updateFileInputWithAllFiles();
+        updateFileCountDisplay();
+    }
+    
+    // Helper function to update file input
+    function updateFileInputWithAllFiles() {
+        const imageInput = document.getElementById('newImages');
+        if (imageInput) {
+            const dataTransfer = new DataTransfer();
+            allSelectedFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            imageInput.files = dataTransfer.files;
+        }
+    }
+    
+    // Helper function to update file count display
+    function updateFileCountDisplay() {
+        const countDisplay = document.getElementById('fileCountDisplay');
+        if (countDisplay) {
+            if (allSelectedFiles.length === 0) {
+                countDisplay.textContent = 'No new images selected';
+                countDisplay.style.color = '#6c757d';
+            } else {
+                countDisplay.textContent = `${allSelectedFiles.length} new image(s) selected`;
+                countDisplay.style.color = '#198754';
+            }
+        }
+    }
+    
+    // Form validation for UPDATE
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        // Basic validation
+        const name = document.getElementById('name').value.trim();
+        const price = document.getElementById('price').value;
+        const category = document.getElementById('category').value;
+        const brand = document.getElementById('brand').value;
+        const description = document.getElementById('description').value.trim();
+        
+        // Required fields
+        if (!name || !price || !category || !brand || !description) {
+            e.preventDefault();
+            alert('Please fill all required fields (marked with *)');
+            return false;
+        }
+        
+        // Check if at least one existing image is kept OR new images are added
+        const existingImagesChecked = document.querySelectorAll('.existing-image-checkbox:checked').length;
+        if (existingImagesChecked === 0 && allSelectedFiles.length === 0) {
+            e.preventDefault();
+            alert('Please keep at least one existing image or add new images.');
+            return false;
+        }
+        
+        // Validate new files
+        const invalidFiles = allSelectedFiles.filter(file => {
+            return !file.type.match('image.*') || file.size > 5 * 1024 * 1024;
+        });
+        
+        if (invalidFiles.length > 0) {
+            e.preventDefault();
+            alert('Some new files are invalid. Please select only image files (JPG, PNG, WebP) under 5MB each.');
+            return false;
+        }
+        
+        // Check if at least one size has quantity > 0
+        let hasValidSize = false;
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            if (!input.disabled && parseInt(input.value) > 0) {
+                hasValidSize = true;
+            }
+        });
+        
+        if (!hasValidSize) {
+            e.preventDefault();
+            alert('Please enter quantity for at least one size');
+            return false;
+        }
+        
+        // Check if at least one color is selected
+        const selectedColors = document.querySelectorAll('.color-checkbox:checked');
+        if (selectedColors.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one color');
+            return false;
+        }
+        
+        // Check total images limit (existing + new)
+        const totalImages = document.querySelectorAll('.existing-image-checkbox:checked').length + allSelectedFiles.length;
+        if (totalImages > 10) {
+            e.preventDefault();
+            alert(`Maximum 10 images allowed. You have ${totalImages} images (existing + new).`);
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Delete confirmation
+    function confirmDelete() {
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+    
+    // Delete form submission
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        if (!confirm('Are you absolutely sure? This cannot be undone!')) {
+            e.preventDefault();
+            return false;
+        }
+        return true;
+    });
+</script>
+</body>
+</html>

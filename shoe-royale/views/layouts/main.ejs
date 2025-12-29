@@ -52,6 +52,42 @@
             padding-top: 76px;
         }
     </style>
+     <style>
+        /* ===== FORCE NO MARGINS ===== */
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        
+        /* Remove navbar fixed-top and make it static */
+        .navbar {
+            position: static !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Remove ALL padding from containers */
+        .fixed-navbar-adjust {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+        
+        .flash-container {
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }
+        
+        /* Force no spacing on main */
+        main {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Override Bootstrap's fixed-top */
+        .fixed-top {
+            position: static !important;
+        }
+    </style>
 </head>
 <body>
     
@@ -109,7 +145,7 @@
                 </ul>
                 
                 <ul class="navbar-nav">
-                    <% if (user) { %>
+                    <% if (user ) { %>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle me-1"></i> <%= user.name %>

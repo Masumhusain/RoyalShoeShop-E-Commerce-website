@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
+const upload = require('../middleware/uploadCloudinary');
+const Product = require('../models/Product');
 
 // Simple Admin Dashboard with Stats
 router.get('/dashboard', async (req, res) => {
@@ -358,46 +362,383 @@ router.get('/settings', (req, res) => {
 
 // Additional Admin Routes for Better Management
 
-// Create Product Page
+// Admin - Add Product Page
+// GET: Show create product form
+// GET: Show create product form
+// GET: Show create product form
 router.get('/products/create', (req, res) => {
+  try {
+    console.log('📄 GET /admin/products/create - Rendering form');
+    
+    // Admin authentication check
     if (!req.session.user || req.session.user.role !== 'admin') {
-        return res.redirect('/admin-login');
+      req.flash('error_msg', 'Please login as admin first');
+      return res.redirect('/admin-login');
     }
     
-    res.render('admin/product-create', {
-        title: 'Add New Product',
-        user: req.session.user,
-        currentPage: 'products'
-    });
+    // Data for the form
+    const formData = {
+      title: 'Add New Product',
+      user: req.session.user,
+      categories: ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'],
+      brands: ['Nike', 'Adidas', 'Puma', 'Reebok', 'Woodland', 'Bata', 'Campus', 'Red Tape', 'Sparx', 'Skechers', 'Crocs', 'Converse', 'Vans'],
+      sizes: [6, 7, 8, 9, 10, 11, 12],
+      colors: [
+        { name: 'Black', code: '#000000' },
+        { name: 'White', code: '#FFFFFF' },
+        { name: 'Red', code: '#FF0000' },
+        { name: 'Blue', code: '#0000FF' },
+        { name: 'Green', code: '#008000' },
+        { name: 'Brown', code: '#8B4513' },
+        { name: 'Gray', code: '#808080' },
+        { name: 'Navy Blue', code: '#000080' },
+        { name: 'Maroon', code: '#800000' },
+        { name: 'Orange', code: '#FFA500' },
+        { name: 'Yellow', code: '#FFFF00' },
+        { name: 'Pink', code: '#FFC0CB' },
+        { name: 'Purple', code: '#800080' },
+        { name: 'Beige', code: '#F5F5DC' },
+        { name: 'Khaki', code: '#C3B091' }
+      ],
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
+    };
+    
+    console.log('✅ Form data prepared, rendering page...'); // Fixed line
+    res.render('admin/product-create', formData);
+    
+  } catch (error) {
+    console.error('❌ Error rendering create page:', error);
+    req.flash('error_msg', 'Error loading form');
+    res.redirect('/admin/products');
+  }
 });
 
-// Edit Product Page
-router.get('/products/edit/:id', async (req, res) => {
+// POST: Handle product creation
+// DEBUG ROUTE - सिर्फ check के लिए
+// routes/admin.js में POST route
+
+
+
+// const upload = require('../middleware/uploadCloudinary');
+
+
+
+// POST: Handle product creation
+router.post('/products/create', upload.array('images', 10), async (req, res) => {
+  try {
+    console.log('🚀 POST /admin/products/create - Processing...');
+    
+    // Admin authentication check
     if (!req.session.user || req.session.user.role !== 'admin') {
-        return res.redirect('/admin-login');
+      req.flash('error_msg', 'Please login as admin first');
+      return res.redirect('/admin-login');
     }
     
-    try {
-        const Product = mongoose.model('Product');
-        const product = await Product.findById(req.params.id).lean();
-        
-        if (!product) {
-            req.session.error_msg = 'Product not found';
-            return res.redirect('/admin/products');
-        }
-        
-        res.render('admin/product-edit', {
-            title: 'Edit Product',
-            user: req.session.user,
-            currentPage: 'products',
-            product: product
-        });
-        
-    } catch (error) {
-        console.error("Error loading product for edit:", error);
-        req.session.error_msg = 'Error loading product';
-        res.redirect('/admin/products');
+    // Log request data for debugging
+    console.log('📦 Request body keys:', Object.keys(req.body));
+    console.log('📸 Files uploaded:', req.files ? req.files.length : 0);
+    
+    // 1. VALIDATION
+    const { name, description, price, discountPrice, category, brand, featured } = req.body;
+    
+    const errors = [];
+    if (!name || name.trim() === '') errors.push('Product name is required');
+    if (!description || description.trim() === '') errors.push('Description is required');
+    if (!price || isNaN(price) || parseFloat(price) <= 0) errors.push('Valid price is required');
+    if (!category) errors.push('Category is required');
+    if (!brand) errors.push('Brand is required');
+    
+    if (errors.length > 0) {
+      req.flash('error_msg', errors.join(', '));
+      return res.redirect('/admin/products/create');
     }
+    
+    // 2. CHECK IMAGES
+    if (!req.files || req.files.length === 0) {
+      req.flash('error_msg', 'Please upload at least one product image');
+      return res.redirect('/admin/products/create');
+    }
+    
+    console.log(`✅ Validation passed, ${req.files.length} image(s) uploaded`);
+    
+    // 3. PROCESS SIZES
+    const sizes = [];
+    
+    // Get sizes from checkboxes
+    if (req.body.sizes) {
+      let sizesArray = req.body.sizes;
+      // Convert to array if single value
+      if (!Array.isArray(sizesArray)) {
+        sizesArray = [sizesArray];
+      }
+      
+      sizesArray.forEach(sizeStr => {
+        const size = parseInt(sizeStr);
+        const quantityKey = `size_${size}_quantity`;
+        const quantity = parseInt(req.body[quantityKey]) || 0;
+        
+        if (quantity > 0) {
+          sizes.push({
+            size: size,
+            quantity: quantity
+          });
+        }
+      });
+    }
+    
+    // If no sizes from checkboxes, check individual fields
+    if (sizes.length === 0) {
+      for (let size = 6; size <= 12; size++) {
+        const quantityKey = `size_${size}_quantity`;
+        if (req.body[quantityKey] && parseInt(req.body[quantityKey]) > 0) {
+          sizes.push({
+            size: size,
+            quantity: parseInt(req.body[quantityKey])
+          });
+        }
+      }
+    }
+    
+    // Default size if none selected
+    if (sizes.length === 0) {
+      sizes.push({ size: 9, quantity: 10 });
+    }
+    
+    console.log('👟 Processed sizes:', sizes);
+    
+    // 4. PROCESS COLORS
+    const colors = [];
+    
+    if (req.body.colors) {
+      let colorsArray = req.body.colors;
+      // Convert to array if single value
+      if (!Array.isArray(colorsArray)) {
+        colorsArray = [colorsArray];
+      }
+      
+      // Filter out empty values
+      colorsArray = colorsArray.filter(color => color && color.trim() !== '');
+      
+      if (colorsArray.length > 0) {
+        colorsArray.forEach(colorName => {
+          const colorCodeKey = `color_${colorName}_code`;
+          const colorCode = req.body[colorCodeKey] || '#000000';
+          
+          colors.push({
+            name: colorName,
+            code: colorCode,
+            images: [] // Will be assigned below
+          });
+        });
+      }
+    }
+    
+    // 5. PROCESS IMAGES (Cloudinary)
+    const cloudinaryImages = req.files.map(file => ({
+      url: file.path,           // Cloudinary URL
+      public_id: file.filename, // Cloudinary public ID
+      secure_url: file.path     // HTTPS URL
+    }));
+    
+    console.log('🖼️ Cloudinary images:', cloudinaryImages.length);
+    
+    // 6. ASSIGN IMAGES TO COLORS
+    if (colors.length === 0) {
+      // If no colors selected, create default color with all images
+      colors.push({
+        name: 'Default',
+        code: '#000000',
+        images: cloudinaryImages
+      });
+    } else {
+      // Distribute images among selected colors
+      const imagesPerColor = Math.ceil(cloudinaryImages.length / colors.length);
+      
+      colors.forEach((color, index) => {
+        const startIdx = index * imagesPerColor;
+        const endIdx = Math.min(startIdx + imagesPerColor, cloudinaryImages.length);
+        color.images = cloudinaryImages.slice(startIdx, endIdx);
+      });
+    }
+    
+    console.log('🎨 Colors with images:', colors.map(c => ({ name: c.name, images: c.images.length })));
+    
+    // 7. CALCULATE TOTAL STOCK
+    const totalStock = sizes.reduce((sum, size) => sum + size.quantity, 0);
+    
+    // 8. CREATE PRODUCT OBJECT
+    const productData = {
+      name: name.trim(),
+      description: description.trim(),
+      price: parseFloat(price),
+      discountPrice: discountPrice ? parseFloat(discountPrice) : undefined,
+      category: category,
+      brand: brand,
+      sizes: sizes,
+      colors: colors,
+      featured: featured === 'on',
+      rating: 0,
+      reviewsCount: 0,
+      createdAt: new Date()
+    };
+    
+    console.log('💾 Product data ready for save');
+    
+    // 9. SAVE TO DATABASE
+    const Product = mongoose.model('Product');
+    const product = new Product(productData);
+    
+    const savedProduct = await product.save();
+    
+    console.log('✅ Product saved successfully! ID:', savedProduct._id);
+    console.log('Total images saved:', savedProduct.colors.reduce((sum, color) => sum + color.images.length, 0));
+    
+    // 10. SUCCESS RESPONSE
+    req.flash('success_msg', `Product "${savedProduct.name}" added successfully with ${req.files.length} images!`);
+    res.redirect('/products');
+    
+  } catch (error) {
+    console.error('❌ ERROR in product creation:', error);
+    console.error('Error details:', error.message);
+    
+    // Cleanup: Delete uploaded files from Cloudinary on error
+    if (req.files && req.files.length > 0) {
+      console.log('🧹 Cleaning up uploaded images due to error');
+      const cloudinary = require('../config/cloudinary');
+      req.files.forEach(file => {
+        cloudinary.uploader.destroy(file.filename, (err, result) => {
+          if (err) console.error('Failed to delete from Cloudinary:', err);
+        });
+      });
+    }
+    
+    // Redirect back with error message
+    req.flash('error_msg', `Error creating product: ${error.message}`);
+    res.redirect('/admin/products/create');
+  }
+});
+// Admin - Edit Product Page
+router.get('/edit/:id', ensureAdmin, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      req.flash('error_msg', 'Product not found');
+      return res.redirect('/admin/products');
+    }
+
+    res.render('/product-edit', {
+      title: 'Edit Product | Admin',
+      user: req.user,
+      product,
+      categories: ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'],
+      brands: ['Nike', 'Adidas', 'Puma', 'Reebok', 'Woodland', 'Bata', 'Campus', 'Red Tape', 'Sparx', 'Skechers', 'Crocs', 'Converse', 'Vans'],
+      sizes: [6, 7, 8, 9, 10, 11, 12],
+      colors: [
+        { name: 'Black', code: '#000000' },
+        { name: 'White', code: '#FFFFFF' },
+        { name: 'Red', code: '#FF0000' },
+        { name: 'Blue', code: '#0000FF' },
+        { name: 'Green', code: '#008000' },
+        { name: 'Brown', code: '#8B4513' },
+        { name: 'Gray', code: '#808080' },
+        { name: 'Navy Blue', code: '#000080' },
+        { name: 'Maroon', code: '#800000' },
+        { name: 'Orange', code: '#FFA500' },
+        { name: 'Yellow', code: '#FFFF00' },
+        { name: 'Pink', code: '#FFC0CB' },
+        { name: 'Purple', code: '#800080' },
+        { name: 'Beige', code: '#F5F5DC' },
+        { name: 'Khaki', code: '#C3B091' }
+      ],
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
+    });
+    
+  } catch (error) {
+    console.error('Error loading product for edit:', error);
+    req.flash('error_msg', 'Error loading product');
+    res.redirect('/admin/products');
+  }
+});
+
+// Admin - Handle Edit Product
+router.post('/edit/:id', ensureAdmin, upload.array('images', 10), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      req.flash('error_msg', 'Product not found');
+      return res.redirect('/admin/products');
+    }
+
+    // Update product fields
+    product.name = req.body.name;
+    product.description = req.body.description;
+    product.price = parseFloat(req.body.price);
+    product.discountPrice = req.body.discountPrice ? parseFloat(req.body.discountPrice) : undefined;
+    product.category = req.body.category;
+    product.brand = req.body.brand;
+    product.featured = req.body.featured === 'on';
+
+    // Update sizes
+    if (req.body.sizes && Array.isArray(req.body.sizes)) {
+      product.sizes = req.body.sizes.map(size => ({
+        size: parseInt(size),
+        quantity: parseInt(req.body[`size_${size}_quantity`] || 0)
+      }));
+    }
+
+    // Update colors
+    if (req.body.colors && Array.isArray(req.body.colors)) {
+      product.colors = req.body.colors.map(color => ({
+        name: color,
+        code: req.body[`color_${color}_code`] || '#000000'
+      }));
+    }
+
+    // Handle new images
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
+      
+      // Add new images to existing images
+      if (product.colors.length === 0) {
+        // Create default color if none exists
+        product.colors.push({
+          name: 'Default',
+          code: '#000000',
+          images: newImages
+        });
+      } else {
+        // Add to first color's images
+        product.colors[0].images = [...(product.colors[0].images || []), ...newImages];
+      }
+    }
+
+    await product.save();
+
+    req.flash('success_msg', 'Product updated successfully!');
+    res.redirect('/admin/products');
+    
+  } catch (error) {
+    console.error('Error updating product:', error);
+    req.flash('error_msg', `Error updating product: ${error.message}`);
+    res.redirect(`/products/admin/edit/${req.params.id}`);
+  }
+});
+
+// Admin - Delete Product
+router.post('/delete/:id', ensureAdmin, async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    req.flash('success_msg', 'Product deleted successfully!');
+    res.redirect('/admin/products');
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    req.flash('error_msg', 'Error deleting product');
+    res.redirect('/admin/products');
+  }
 });
 
 // View Order Details
@@ -491,4 +832,4 @@ router.get('/api/stats', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = router; 

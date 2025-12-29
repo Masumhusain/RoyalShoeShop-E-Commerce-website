@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'Add Product' %></title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-dark: #1a1a2e;
+            --secondary-dark: #16213e;
+            --royal-gold: #ffd700;
+            --light-bg: #f5f7fb;
+        }
+        
+        body {
+            background: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .admin-navbar {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .admin-container {
+            padding: 30px 0 50px 0;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--royal-gold);
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .section-title {
+            color: var(--primary-dark);
+            font-weight: 700;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--royal-gold);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--royal-gold);
+            box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25);
+        }
+        
+        .btn-gold {
+            background: linear-gradient(135deg, var(--royal-gold) 0%, #ffed4e 100%);
+            color: var(--primary-dark);
+            border: none;
+            font-weight: 700;
+            padding: 12px 30px;
+            border-radius: 8px;
+        }
+        
+        .size-card, .color-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .image-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .image-upload-area:hover {
+            border-color: var(--royal-gold);
+            background: #fff9e6;
+        }
+        
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #dee2e6;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .remove-image {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+        }
+        
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Navbar -->
+    <nav class="admin-navbar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">
+                        <i class="fas fa-crown me-2 text-warning"></i>
+                        Royal Admin Panel
+                    </h4>
+                    <small class="text-light">Welcome, <%= user ? user.name : 'Admin' %></small>
+                </div>
+                <div>
+                    <a href="/admin/dashboard" class="btn btn-light btn-sm me-2">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
+                    <a href="/admin/products" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container admin-container">
+        <!-- Flash Messages -->
+        <% if (success_msg && success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle me-3 fa-lg"></i>
+                    <div><%= success_msg %></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <% if (error_msg && error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle me-3 fa-lg"></i>
+                    <div><%= error_msg %></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+        
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="h3 fw-bold mb-2">
+                <i class="fas fa-plus-circle text-warning me-2"></i>
+                Add New Product
+            </h1>
+            <p class="text-muted mb-0">Add a new product to your Royal Footwear collection</p>
+        </div>
+        
+        <!-- Product Form -->
+        <form action="/admin/products/create" method="POST" enctype="multipart/form-data" id="productForm">
+            <div class="form-card">
+                <!-- Basic Information Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Basic Information
+                    </h3>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="name" class="form-label required">Product Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="Enter product name">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="category" class="form-label required">Category</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" selected disabled>Select category</option>
+                                <% if(categories && categories.length > 0) { %>
+                                    <% categories.forEach(category => { %>
+                                        <option value="<%= category %>">
+                                            <%= category.charAt(0).toUpperCase() + category.slice(1) %>
+                                        </option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="brand" class="form-label required">Brand</label>
+                            <select class="form-select" id="brand" name="brand" required>
+                                <option value="" selected disabled>Select brand</option>
+                                <% if(brands && brands.length > 0) { %>
+                                    <% brands.forEach(brand => { %>
+                                        <option value="<%= brand %>"><%= brand %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Product Status</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" id="featured" name="featured" checked>
+                                <label class="form-check-label" for="featured">
+                                    Mark as Featured Product
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label required">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4" required placeholder="Enter product description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Pricing Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-tag"></i>
+                        Pricing
+                    </h3>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label required">Regular Price (₹)</label>
+                            <input type="number" class="form-control" id="price" name="price" 
+                                   step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="discountPrice" class="form-label">Discount Price (₹)</label>
+                            <input type="number" class="form-control" id="discountPrice" 
+                                   name="discountPrice" step="0.01" min="0" placeholder="Optional">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sizes & Stock Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-shoe-prints"></i>
+                        Sizes & Stock Management
+                    </h3>
+                    
+                    <div class="row">
+                        <% 
+                        const sizesList = sizes || [6, 7, 8, 9, 10, 11, 12];
+                        sizesList.forEach(size => { 
+                        %>
+                            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                <div class="size-card">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input size-checkbox" 
+                                               type="checkbox" 
+                                               id="size_<%= size %>" 
+                                               name="sizes" 
+                                               value="<%= size %>">
+                                        <label class="form-check-label fw-bold" for="size_<%= size %>">
+                                            Size <%= size %>
+                                        </label>
+                                    </div>
+                                    
+                                    <input type="number" class="form-control form-control-sm quantity-input" 
+                                           id="size_<%= size %>_quantity" 
+                                           name="size_<%= size %>_quantity" 
+                                           min="0" value="0" placeholder="Qty" 
+                                           data-size="<%= size %>" disabled>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <!-- Colors Section -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-palette"></i>
+                        Colors
+                    </h3>
+                    
+                    <div class="row">
+                        <% 
+                        const colorsList = colors || [
+                            { name: 'Black', code: '#000000' },
+                            { name: 'White', code: '#FFFFFF' },
+                            { name: 'Red', code: '#FF0000' },
+                            { name: 'Blue', code: '#0000FF' },
+                            { name: 'Green', code: '#008000' },
+                            { name: 'Brown', code: '#8B4513' }
+                        ];
+                        colorsList.forEach(color => { 
+                        %>
+                            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                <div class="color-card">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input color-checkbox" 
+                                               type="checkbox" 
+                                               id="color_<%= color.name %>" 
+                                               name="colors" 
+                                               value="<%= color.name %>">
+                                        <label class="form-check-label" for="color_<%= color.name %>">
+                                            <span class="color-preview me-2" 
+                                                  style="background-color: <%= color.code %>"></span>
+                                            <%= color.name %>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <label class="form-label small">Color Code</label>
+                                        <input type="color" 
+                                               class="form-control form-control-color p-1 color-code-input" 
+                                               id="color_<%= color.name %>_code" 
+                                               name="color_<%= color.name %>_code" 
+                                               value="<%= color.code %>" 
+                                               title="Choose color" 
+                                               data-color="<%= color.name %>" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <!-- Images Section - FIXED -->
+                <div class="mb-4">
+                    <h3 class="section-title">
+                        <i class="fas fa-images"></i>
+                        Product Images
+                    </h3>
+                    
+                    <div class="mb-3">
+                        <!-- MAIN FILE INPUT - VISIBLE -->
+                        <label class="form-label required">Upload Images</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="imageInput" 
+                               name="images" 
+                               accept="image/*" 
+                               multiple 
+                               required>
+                        <div class="form-text mt-1">Select multiple images (JPG, PNG, WebP). Max 10 images, 5MB each.</div>
+                        
+                        <!-- Optional Upload Area -->
+                        <div class="image-upload-area mt-3" id="imageUploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-3"></i>
+                            <h5 class="mb-2">Or click here to browse files</h5>
+                            <p class="text-muted small mb-0">Drag & drop or click to select images</p>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreviewContainer" class="image-preview-container mt-3"></div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between pt-3 border-top">
+                    <a href="/admin/products" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-gold">
+                        <i class="fas fa-plus-circle me-2"></i> Add Product
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    // Global variable to store all selected files
+    let allSelectedFiles = [];
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Focus on name field
+        document.getElementById('name').focus();
+        
+        // File input elements
+        const imageInput = document.getElementById('imageInput');
+        const imageUploadArea = document.getElementById('imageUploadArea');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        
+        // Create file count display
+        const countDisplay = document.createElement('div');
+        countDisplay.id = 'fileCountDisplay';
+        countDisplay.className = 'text-muted small mt-2';
+        countDisplay.textContent = 'No images selected';
+        imageInput.parentNode.appendChild(countDisplay);
+        
+        // Click on upload area to trigger file input
+        if (imageUploadArea && imageInput) {
+            imageUploadArea.addEventListener('click', () => {
+                imageInput.click();
+            });
+        }
+        
+        // Image preview functionality - FIXED FOR MULTIPLE SELECTIONS
+        if (imageInput) {
+            imageInput.addEventListener('change', function(e) {
+                const newFiles = Array.from(e.target.files);
+                
+                if (newFiles.length === 0) {
+                    updateFileCountDisplay();
+                    return;
+                }
+                
+                // Check if adding new files exceeds limit
+                if (allSelectedFiles.length + newFiles.length > 10) {
+                    alert(`Maximum 10 images allowed. You already have ${allSelectedFiles.length} images. Please remove some first.`);
+                    return;
+                }
+                
+                // Clear error message if present
+                if (imagePreviewContainer.innerHTML.includes('No images selected')) {
+                    imagePreviewContainer.innerHTML = '';
+                }
+                
+                // Process new files
+                newFiles.forEach((file, index) => {
+                    // Validate file type
+                    if (!file.type.match('image.*')) {
+                        alert(`"${file.name}" is not an image file. Skipping.`);
+                        return;
+                    }
+                    
+                    // Validate file size
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert(`"${file.name}" is too large (max 5MB). Skipping.`);
+                        return;
+                    }
+                    
+                    // Add file to global array
+                    const fileIndex = allSelectedFiles.length;
+                    allSelectedFiles.push(file);
+                    
+                    // Create preview for this file
+                    createImagePreview(file, fileIndex);
+                });
+                
+                // Update actual file input with all files
+                updateFileInputWithAllFiles();
+                updateFileCountDisplay();
+            });
+        }
+        
+        // Function to create image preview
+        function createImagePreview(file, index) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'image-preview';
+                previewDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview ${index + 1}">
+                    <span class="position-absolute top-0 start-0 bg-dark text-white px-1 small">${index + 1}</span>
+                    <button type="button" class="remove-image" data-index="${index}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                imagePreviewContainer.appendChild(previewDiv);
+                
+                // Add event listener to remove button
+                const removeBtn = previewDiv.querySelector('.remove-image');
+                removeBtn.addEventListener('click', function() {
+                    const idx = parseInt(this.getAttribute('data-index'));
+                    removeImage(idx);
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Function to update actual file input with all selected files
+        function updateFileInputWithAllFiles() {
+            const dataTransfer = new DataTransfer();
+            allSelectedFiles.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+            imageInput.files = dataTransfer.files;
+        }
+        
+        // Function to update file count display
+        function updateFileCountDisplay() {
+            const countDisplay = document.getElementById('fileCountDisplay');
+            if (allSelectedFiles.length === 0) {
+                countDisplay.textContent = 'No images selected';
+                countDisplay.style.color = '#6c757d';
+                
+                // Show empty message in preview container if empty
+                if (imagePreviewContainer.children.length === 0) {
+                    imagePreviewContainer.innerHTML = '<p class="text-muted">No images selected</p>';
+                }
+            } else {
+                countDisplay.textContent = `${allSelectedFiles.length} image(s) selected`;
+                countDisplay.style.color = '#198754'; // Green color
+            }
+        }
+        
+        // Function to remove an image
+        function removeImage(index) {
+            // Remove from array
+            allSelectedFiles.splice(index, 1);
+            
+            // Clear preview container
+            imagePreviewContainer.innerHTML = '';
+            
+            // Regenerate all previews with updated indices
+            allSelectedFiles.forEach((file, newIndex) => {
+                createImagePreview(file, newIndex);
+            });
+            
+            // Update file input and count
+            updateFileInputWithAllFiles();
+            updateFileCountDisplay();
+        }
+        
+        // Size checkbox functionality
+        document.querySelectorAll('.size-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const size = this.value;
+                const quantityInput = document.getElementById(`size_${size}_quantity`);
+                if (quantityInput) {
+                    quantityInput.disabled = !this.checked;
+                    if (!this.checked) {
+                        quantityInput.value = 0;
+                    } else {
+                        quantityInput.focus();
+                    }
+                }
+            });
+        });
+        
+        // Color checkbox functionality
+        document.querySelectorAll('.color-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const colorName = this.value;
+                const colorCodeInput = document.getElementById(`color_${colorName}_code`);
+                if (colorCodeInput) {
+                    colorCodeInput.disabled = !this.checked;
+                }
+            });
+        });
+    });
+    
+    // Form validation
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        // Basic validation
+        const name = document.getElementById('name').value.trim();
+        const price = document.getElementById('price').value;
+        const category = document.getElementById('category').value;
+        const brand = document.getElementById('brand').value;
+        const description = document.getElementById('description').value.trim();
+        
+        // Required fields
+        if (!name || !price || !category || !brand || !description) {
+            e.preventDefault();
+            alert('Please fill all required fields (marked with *)');
+            return false;
+        }
+        
+        // Check images
+        if (allSelectedFiles.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one product image');
+            return false;
+        }
+        
+        // Validate all files
+        const invalidFiles = allSelectedFiles.filter(file => {
+            return !file.type.match('image.*') || file.size > 5 * 1024 * 1024;
+        });
+        
+        if (invalidFiles.length > 0) {
+            e.preventDefault();
+            alert('Some files are invalid. Please select only image files (JPG, PNG, WebP) under 5MB each.');
+            return false;
+        }
+        
+        // Check if at least one size has quantity > 0
+        let hasValidSize = false;
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            if (!input.disabled && parseInt(input.value) > 0) {
+                hasValidSize = true;
+            }
+        });
+        
+        if (!hasValidSize) {
+            e.preventDefault();
+            alert('Please enter quantity for at least one size');
+            return false;
+        }
+        
+        // Check if at least one color is selected
+        const selectedColors = document.querySelectorAll('.color-checkbox:checked');
+        if (selectedColors.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one color');
+            return false;
+        }
+        
+        // Check maximum images limit
+        if (allSelectedFiles.length > 10) {
+            e.preventDefault();
+            alert('Maximum 10 images allowed. Please remove some images.');
+            return false;
+        }
+        
+        return true;
+    });
+</script>
+</body>
+</html>

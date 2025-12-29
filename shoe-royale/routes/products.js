@@ -1,15 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/auth');
-const upload = require('../middleware/upload');
-const Product = require('../models/Product');
 
-// Get all products
+const Product = require('../models/Product');
+const Cart = require('../models/Cart');
+const mongoose = require('mongoose');
+
 // Get all products
 router.get('/', async (req, res) => {
   try {
-    const { category, brand, minPrice, maxPrice, sort } = req.query;
+    const { category, brand, minPrice, maxPrice, sort, search } = req.query;
     let filter = {};
+
+    // Search functionality
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } }
+      ];
+    }
 
     if (category) filter.category = category;
     if (brand) filter.brand = brand;
@@ -17,6 +27,16 @@ router.get('/', async (req, res) => {
       filter.price = {};
       if (minPrice) filter.price.$gte = parseFloat(minPrice);
       if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
+    }
+
+    // Calculate discount filter
+    if (req.query.discount === 'true') {
+      filter.discountPrice = { $exists: true, $gt: 0 };
+    }
+
+    // Featured filter
+    if (req.query.featured === 'true') {
+      filter.featured = true;
     }
 
     let sortOption = {};
@@ -30,32 +50,48 @@ router.get('/', async (req, res) => {
       case 'newest':
         sortOption = { createdAt: -1 };
         break;
+      case 'oldest':
+        sortOption = { createdAt: 1 };
+        break;
       case 'rating':
         sortOption = { rating: -1 };
+        break;
+      case 'name-asc':
+        sortOption = { name: 1 };
+        break;
+      case 'name-desc':
+        sortOption = { name: -1 };
         break;
       default:
         sortOption = { createdAt: -1 };
     }
 
-    const product = await Product.find(filter).sort(sortOption);
+    const products = await Product.find(filter).sort(sortOption);
     const categories = await Product.distinct('category');
     const brands = await Product.distinct('brand');
 
+    // Calculate total products count
+    const totalProducts = await Product.countDocuments(filter);
+
     res.render('products/index', {
-      title: 'Products',
-      product: product || [], // Ensure it's always an array
+      title: 'Products | Royal Footwear',
+      products: products || [],
       categories: categories || [],
       brands: brands || [],
-      filters: req.query || {}
+      filters: req.query || {},
+      totalProducts,
+      user: req.user || null
     });
   } catch (err) {
-    console.error(err);
+    console.error('Error fetching products:', err);
     res.render('products/index', {
-      title: 'Products',
-      product: [],
+      title: 'Products | Royal Footwear',
+      products: [],
       categories: [],
       brands: [],
-      filters: {}
+      filters: {},
+      totalProducts: 0,
+      user: req.user || null
     });
   }
 });
@@ -66,87 +102,297 @@ router.get('/:id', async (req, res) => {
     const product = await Product.findById(req.params.id);
     
     if (!product) {
-      return res.status(404).render('404', { title: 'Product Not Found' });
+      return res.status(404).render('404', { 
+        title: 'Product Not Found',
+        user: req.user || null
+      });
     }
 
-    // Get related products
+    // Calculate total stock
+    const totalStock = product.sizes.reduce((sum, size) => sum + size.quantity, 0);
+
+    // Get related products (same category, different brand)
     const relatedProducts = await Product.find({
       category: product.category,
+      _id: { $ne: product._id },
+      brand: { $ne: product.brand }
+    }).limit(4);
+
+    // Get similar products (same brand)
+    const similarProducts = await Product.find({
+      brand: product.brand,
       _id: { $ne: product._id }
     }).limit(4);
 
     res.render('products/show', {
-      title: product.name,
+      title: `${product.name} | Royal Footwear`,
       product,
-      relatedProducts
+      totalStock,
+      relatedProducts: relatedProducts || [],
+      similarProducts: similarProducts || [],
+      user: req.user || null,
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
     });
   } catch (err) {
-    console.error(err);
+    console.error('Error loading product:', err);
     res.status(500).render('error', { 
       title: 'Error',
+      message: 'Error loading product',
+      user: req.user || null
+    });
+  }
+});
+
+// ============ ADMIN ROUTES ============
+
+
+// ============ CART ROUTES ============
+
+// Add to Cart
+router.post('/:id/cart', ensureAuthenticated, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    const { quantity = 1, size, color } = req.body;
+    
+    // Find or create cart for user
+    let cart = await Cart.findOne({ user: req.user._id });
+    
+    if (!cart) {
+      cart = new Cart({
+        user: req.user._id,
+        items: []
+      });
+    }
+
+    // Check if product already in cart with same size and color
+    const existingItemIndex = cart.items.findIndex(
+      item => item.product.toString() === product._id.toString() && 
+              item.size === size && 
+              item.color === color
+    );
+
+    if (existingItemIndex > -1) {
+      // Update quantity
+      cart.items[existingItemIndex].quantity += parseInt(quantity);
+    } else {
+      // Add new item
+      cart.items.push({
+        product: product._id,
+        name: product.name,
+        price: product.price,
+        discountedPrice: product.discountPrice,
+        quantity: parseInt(quantity),
+        size,
+        color,
+        image: product.colors[0]?.images?.[0] || product.images?.[0] || '/images/default-product.jpg'
+      });
+    }
+
+    await cart.save();
+    
+    // Get updated cart with product details
+    await cart.populate('items.product', 'name price images stock');
+
+    res.json({
+      success: true,
+      message: 'Product added to cart',
+      cart,
+      cartCount: cart.items.reduce((sum, item) => sum + item.quantity, 0)
+    });
+    
+  } catch (error) {
+    console.error('Add to cart error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding to cart'
+    });
+  }
+});
+
+// Get Cart Count for Navbar
+router.get('/cart/count', async (req, res) => {
+  try {
+    let count = 0;
+    if (req.user) {
+      const cart = await Cart.findOne({ user: req.user._id });
+      count = cart ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    }
+    res.json({ 
+      success: true, 
+      count 
+    });
+  } catch (err) {
+    console.error('Cart count error:', err);
+    res.json({ 
+      success: true, 
+      count: 0 
+    });
+  }
+});
+
+// Quick View Product (AJAX)
+router.get('/:id/quickview', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      product: {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        discountPrice: product.discountPrice,
+        images: product.colors[0]?.images || product.images || [],
+        stock: product.sizes.reduce((sum, size) => sum + size.quantity, 0),
+        sizes: product.sizes.filter(s => s.quantity > 0).map(s => s.size),
+        colors: product.colors.map(c => ({ name: c.name, code: c.code })),
+        brand: product.brand,
+        category: product.category
+      }
+    });
+  } catch (error) {
+    console.error('Quick view error:', error);
+    res.status(500).json({
+      success: false,
       message: 'Error loading product'
     });
   }
 });
 
-// Admin routes
-router.get('/admin/create', ensureAdmin, (req, res) => {
-  res.render('products/create', { title: 'Create Product' });
-});
-
-router.post('/admin/create', ensureAdmin, upload.array('images', 5), async (req, res) => {
+// Get Products by Category
+router.get('/category/:category', async (req, res) => {
   try {
-    const { name, description, price, discountPrice, category, brand, sizes, colors } = req.body;
-    
-    const sizeArray = sizes.split(',').map(size => ({
-      size: parseInt(size.trim()),
-      quantity: parseInt(req.body[`quantity_${size}`])
-    }));
+    const products = await Product.find({ 
+      category: req.params.category,
+      'sizes.quantity': { $gt: 0 } // Only products with stock
+    }).sort({ createdAt: -1 }).limit(20);
 
-    const colorArray = colors.split(',').map((color, index) => ({
-      name: color.trim(),
-      code: req.body[`color_code_${index}`],
-      images: req.files
-        .filter(file => file.fieldname === `color_images_${index}`)
-        .map(file => `/uploads/products/${file.filename}`)
-    }));
+    const categories = await Product.distinct('category');
+    const brands = await Product.distinct('brand');
 
-    const product = new Product({
-      name,
-      description,
-      price,
-      discountPrice,
-      category,
-      brand,
-      sizes: sizeArray,
-      colors: colorArray
+    res.render('products/category', {
+      title: `${req.params.category.charAt(0).toUpperCase() + req.params.category.slice(1)} Shoes | Royal Footwear`,
+      products: products || [],
+      category: req.params.category,
+      categories: categories || [],
+      brands: brands || [],
+      filters: req.query || {},
+      user: req.user || null
     });
-
-    await product.save();
-    
-    req.flash('success_msg', 'Product created successfully');
-    res.redirect('/products');
-  } catch (err) {
-    console.error(err);
-    req.flash('error_msg', 'Error creating product');
-    res.redirect('/products/admin/create');
+  } catch (error) {
+    console.error('Category products error:', error);
+    res.render('products/category', {
+      title: 'Category | Royal Footwear',
+      products: [],
+      category: req.params.category,
+      categories: [],
+      brands: [],
+      filters: {},
+      user: req.user || null
+    });
   }
 });
 
-
-
-router.get('/cart/count', async (req, res) => {
+// Search Products
+router.get('/search', async (req, res) => {
   try {
-    let count = 0;
-    if (req.user) {
-      const Cart = require('../models/Cart');
-      const cart = await Cart.findOne({ user: req.user._id });
-      count = cart ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    const { q } = req.query;
+    
+    if (!q) {
+      return res.redirect('/products');
     }
-    res.json({ count });
-  } catch (err) {
-    console.error(err);
-    res.json({ count: 0 });
+
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { brand: { $regex: q, $options: 'i' } },
+        { category: { $regex: q, $options: 'i' } }
+      ]
+    }).sort({ createdAt: -1 });
+
+    const categories = await Product.distinct('category');
+    const brands = await Product.distinct('brand');
+
+    res.render('products/search', {
+      title: `Search: "${q}" | Royal Footwear`,
+      products: products || [],
+      searchQuery: q,
+      categories: categories || [],
+      brands: brands || [],
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.render('products/search', {
+      title: 'Search | Royal Footwear',
+      products: [],
+      searchQuery: req.query.q || '',
+      categories: [],
+      brands: [],
+      user: req.user || null
+    });
+  }
+});
+
+// Featured Products (API)
+router.get('/api/featured', async (req, res) => {
+  try {
+    const featuredProducts = await Product.find({ 
+      featured: true,
+      'sizes.quantity': { $gt: 0 }
+    }).sort({ createdAt: -1 }).limit(8);
+
+    res.json({
+      success: true,
+      products: featuredProducts
+    });
+  } catch (error) {
+    console.error('Featured products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching featured products'
+    });
+  }
+});
+
+// New Arrivals (API)
+router.get('/api/new-arrivals', async (req, res) => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const newArrivals = await Product.find({
+      createdAt: { $gte: thirtyDaysAgo },
+      'sizes.quantity': { $gt: 0 }
+    }).sort({ createdAt: -1 }).limit(8);
+
+    res.json({
+      success: true,
+      products: newArrivals
+    });
+  } catch (error) {
+    console.error('New arrivals error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching new arrivals'
+    });
   }
 });
 

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Test Form</title>
+</head>
+<body>
+    <h1>Simple Product Form</h1>
+    
+    <form action="/admin/products/create/debug" method="POST" enctype="multipart/form-data">
+        <div>
+            <label>Product Name:</label>
+            <input type="text" name="name" required>
+        </div>
+        
+        <div>
+            <label>Price:</label>
+            <input type="number" name="price" required>
+        </div>
+        
+        <div>
+            <label>Category:</label>
+            <select name="category">
+                <option value="sneakers">Sneakers</option>
+                <option value="boots">Boots</option>
+            </select>
+        </div>
+        
+        <div>
+            <label>Brand:</label>
+            <select name="brand">
+                <option value="Nike">Nike</option>
+                <option value="Adidas">Adidas</option>
+            </select>
+        </div>
+        
+        <!-- SIMPLE FILE INPUT -->
+        <div>
+            <label>Images (Required):</label>
+            <br>
+            <input type="file" name="images" multiple required>
+            <small>Select one or more images</small>
+        </div>
+        
+        <div>
+            <label>Size 9 Quantity:</label>
+            <input type="number" name="size_9_quantity" value="10">
+        </div>
+        
+        <button type="submit">Submit Test</button>
+    </form>
+    
+    <script>
+        // Form submit pe alert
+        document.querySelector('form').addEventListener('submit', function() {
+            alert('Form submitting... Check browser console for response');
+        });
+    </script>
+</body>
+</html>

@@ -38,7 +38,11 @@ const productSchema = new mongoose.Schema({
   colors: [{
     name: String,
     code: String,
-    images: [String]
+    images: [{
+      url: String,        // Cloudinary URL
+      public_id: String,  // Cloudinary public_id for deletion
+      secure_url: String  // HTTPS URL
+    }]
   }],
   featured: {
     type: Boolean,

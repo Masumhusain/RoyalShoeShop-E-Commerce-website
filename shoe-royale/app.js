@@ -6,15 +6,23 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const path = require('path');
 const methodOverride = require('method-override');
-// Add this BEFORE other routes in app.js
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
+
+// Import models
+const Product = require('./models/Product');
+const User = require('./models/User');
+
+
+// Import routes
 const adminRoutes = require('./routes/admin');
+
 // Import configurations
 const connectDB = require('./config/database');
 require('./config/passport-config');
 
 const app = express();
+
 
 // Connect to MongoDB
 connectDB();
@@ -35,7 +43,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'royal-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 1000 * 60 * 60 * 24 } // 24 hours
@@ -53,30 +61,28 @@ app.use((req, res, next) => {
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');
   res.locals.error = req.flash('error');
-  res.locals.user = req.user;
+  res.locals.user = req.user || null;
   next();
 });
 
 
-
-//admin routes 
-
+// Use admin routes
 app.use('/admin', adminRoutes);
-
 
 // Simple admin login page
 app.get('/admin-login', (req, res) => {
     res.render('auth/simple-admin-login', {
-        error_msg: req.flash('error_msg')
+        title: 'Admin Login',
+        error_msg: req.flash('error_msg'),
+        user: null
     });
 });
 
 // Simple admin login handler
-app.post('/admin-login', async(req, res) => {
+app.post('/admin-login', async (req, res) => {
     const { email, password } = req.body;
     
     try {
-        const User = require('./models/User');
         const user = await User.findOne({ email });
         
         if (!user) {
@@ -84,7 +90,6 @@ app.post('/admin-login', async(req, res) => {
             return res.redirect('/admin-login');
         }
         
-        // Check password
         const isMatch = await bcrypt.compare(password, user.password);
         
         if (!isMatch) {
@@ -92,21 +97,19 @@ app.post('/admin-login', async(req, res) => {
             return res.redirect('/admin-login');
         }
         
-        // Check if admin
         if (user.role !== 'admin') {
             req.flash('error_msg', 'Not an admin account');
             return res.redirect('/admin-login');
         }
         
-        // Set session
         req.session.user = {
             id: user._id,
             name: user.name,
             email: user.email,
             role: user.role
         };
+        
         req.flash('success_msg', 'Admin login successful');
-        // Redirect to admin dashboard
         return res.redirect('/admin/dashboard');
         
     } catch (error) {
@@ -115,8 +118,6 @@ app.post('/admin-login', async(req, res) => {
         res.redirect('/admin-login');
     }
 });
-
-
 
 // Logout route
 app.get('/logout', (req, res) => {
@@ -128,58 +129,60 @@ app.get('/logout', (req, res) => {
     });
 });
 
+// Other routes
 
-// Routes
-app.use('/', require('./routes/auth'));
 app.use('/products', require('./routes/products'));
 app.use('/cart', require('./routes/cart'));
 app.use('/orders', require('./routes/orders'));
-// app.use('/admin', adminRoutes);
+app.use('/', require('./routes/auth'));
 
-
-
-
-
-
-// Home route
+// Home route - Fixed
 app.get('/', async (req, res) => {
   try {
-    // Try to fetch featured products
     let featuredProducts = [];
     let categories = [];
     
-    try {
-      featuredProducts = await Product.find({ featured: true })
-        .limit(8)
-        .sort({ createdAt: -1 });
-      
-      categories = await Product.distinct('category');
-    } catch (dbError) {
-      console.log('Database might be empty, showing default content');
-      // Continue with empty arrays
+    if (Product) {
+      try {
+        featuredProducts = await Product.find({ featured: true })
+          .limit(8)
+          .sort({ createdAt: -1 });
+        
+        categories = await Product.distinct('category');
+      } catch (dbError) {
+        console.log('Database might be empty or Product model not defined');
+      }
+    }
+    
+    if (!categories || categories.length === 0) {
+      categories = ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'];
     }
     
     res.render('index', { 
       title: 'Royal Footwear - Premium Shoes',
-      featuredProducts,
-      categories 
+      featuredProducts: featuredProducts || [],
+      categories: categories || [],
+      user: req.user || null
     });
   } catch (error) {
     console.error('Error loading home page:', error);
     res.render('index', { 
       title: 'Royal Footwear - Premium Shoes',
       featuredProducts: [],
-      categories: []
+      categories: ['sneakers', 'boots', 'sandals', 'loafers', 'sports', 'formal'],
+      user: req.user || null
     });
   }
 });
 
 // 404 handler
-app.use((req, res, next) => {
+app.use((req, res) => {
     res.status(404).render('404', { 
-        title: 'Page Not Found | Royal Footwear'
+        title: 'Page Not Found | Royal Footwear',
+        user: req.user || null
     });
 });
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

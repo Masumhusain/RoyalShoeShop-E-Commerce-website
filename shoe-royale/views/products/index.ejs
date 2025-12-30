@@ -24,7 +24,7 @@
         </div>
         <div class="col-md-6 text-md-end">
             <% if (user && user.role === 'admin') { %>
-                <a href="/products/admin/create" class="btn btn-success">
+                <a href="/admin/products/create" class="btn btn-success">
                     <i class="fas fa-plus me-2"></i>Add New Product
                 </a>
             <% } %>
@@ -165,9 +165,9 @@
                             <!-- Add to Cart Button -->
                             <div class="fk-action-buttons">
                                 <% if (prod.sizes && prod.sizes.some(s => s.quantity > 0)) { %>
-                                    <button class="fk-add-to-cart-btn" onclick="addToCart('<%= prod._id %>')">
+                                    <a class="fk-add-to-cart-btn text-decoration-none"  href="/products/<%= prod._id %>">
                                         <i class="fas fa-shopping-cart me-2"></i>ADD TO CART
-                                    </button>
+                                    </a>
                                 <% } else { %>
                                     <button class="fk-out-of-stock-btn" disabled>
                                         <i class="fas fa-times-circle me-2"></i>OUT OF STOCK

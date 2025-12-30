@@ -10,6 +10,8 @@ const methodOverride = require('method-override');
 const connectDB = require('./config/database');
 const { ensureAuthenticated, ensureAdmin } = require('./middleware/auth');
 const bcrypt = require('bcryptjs');
+const ExpressError = require('./utils/ExpressError');
+const wrapAsync = require("./utils/wrapAsync");
 
 // Import models
 const Product = require('./models/Product');
@@ -532,33 +534,41 @@ app.get('/contact', (req, res) => {
   });
 });
 
+
+app.get('/faq', (req, res) => {
+    res.render('faq', { 
+        title: 'FAQ | Royal Footwear',
+        user: req.user || null 
+    });
+});
+
 // About page
+// app.js mein ya routes/index.js mein
 app.get('/about', (req, res) => {
-  res.render('about', { 
-    title: 'About Us | Royal Footwear',
-    user: req.user
-  });
+    res.render('aboutUs', {
+        title: 'About Us | Royal Footwear',
+        user: req.user || null
+    });
 });
 
-
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).render('404', { 
-    title: 'Page Not Found | Royal Footwear',
-    user: req.user
-  });
+app.get('/privacy', (req, res) => {
+    res.render('privacyPolicy', {
+        title: 'Privacy Policy | Royal Footwear',
+        user: req.user || null
+    });
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).render('500', {
-    title: 'Server Error | Royal Footwear',
-    user: req.user,
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong!'
-  });
-});
+//error handler
+app.all(/./, (req , res , next)=> {
+  next(new ExpressError(404, "Page not found"));
+})
+
+//middleware
+app.use((err , req ,res , next)=> {
+  let {status=500 , message="Something went wrong!"} = err;
+  res.status(status).render("error.ejs", {message});
+})
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

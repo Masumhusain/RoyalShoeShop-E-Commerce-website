@@ -1,0 +1,92 @@
+
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <h1 class="text-center text-gold mb-4">Contact Us</h1>
+                    <p class="text-center text-muted mb-5">Get in touch with our support team</p>
+                    
+                    <!-- Contact Form -->
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <form id="contactForm" method="POST"   action="https://formspree.io/f/maqykbyj">
+                                <div class="mb-3">
+                                    <label class="form-label">Your Name *</label>
+                                    <input type="text" name="name" class="form-control" placeholder="Enter your name" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Email Address *</label>
+                                    <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+                                </div>
+                               
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Message *</label>
+                                    <textarea name="message" class="form-control" rows="5" placeholder="How can we help you?" required></textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-gold w-100">
+                                    <i class="fas fa-paper-plane me-2"></i> Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Info -->
+                    <div class="row mt-5">
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="p-3">
+                                <i class="fas fa-phone fa-2x text-gold mb-3"></i>
+                                <h5>Call Us</h5>
+                                <p class="mb-0">+1 (800) 555-1234</p>
+                                <small class="text-muted">Mon-Fri, 9AM-6PM EST</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="p-3">
+                                <i class="fas fa-envelope fa-2x text-gold mb-3"></i>
+                                <h5>Email Us</h5>
+                                <p class="mb-0">support@royalfootwear.com</p>
+                                <small class="text-muted">Response within 24 hours</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="p-3">
+                                <i class="fas fa-map-marker-alt fa-2x text-gold mb-3"></i>
+                                <h5>Visit Us</h5>
+                                <p class="mb-0">123 Fifth Avenue</p>
+                                <small class="text-muted">New York, NY 10001</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            // Simple form validation
+            document.getElementById('contactForm').addEventListener('submit', function(e) {
+                const name = this.querySelector('input[name="name"]').value.trim();
+                const email = this.querySelector('input[name="email"]').value.trim();
+                const message = this.querySelector('textarea[name="message"]').value.trim();
+                
+                if (!name || !email || !message) {
+                    e.preventDefault();
+                    alert('Please fill all required fields');
+                    return false;
+                }
+                
+                if (!email.includes('@') || !email.includes('.')) {
+                    e.preventDefault();
+                    alert('Please enter a valid email address');
+                    return false;
+                }
+                
+                // If all good, show loading
+                const btn = this.querySelector('button[type="submit"]');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Sending...';
+                btn.disabled = true;
+            });
+        </script>
